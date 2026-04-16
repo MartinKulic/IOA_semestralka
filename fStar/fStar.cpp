@@ -82,8 +82,8 @@ FStar::~FStar() {
         //rec.second //value
 
         auto node_edges = rec.second;
-        delete((node_edges)->_edges);
-        delete(node_edges)->node_from;
+        //delete((node_edges)->_edges);
+        //delete(node_edges)->node_from;
         delete(node_edges);
     }
     // for (auto const& rec : *Nodes) {
