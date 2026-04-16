@@ -16,11 +16,25 @@ int main() {
     FStar fsStar = FStar();
     fsStar.addEdge(&n0, &n1, 10);
     fsStar.addEdge(&n1, &n0, 10);
-    fsStar.addEdge(&n0, &n2, 10);
+    fsStar.addEdge(&n0, &n2, 20);
 
     fsStar.addEdge(&n2, &n1, 10);
-    fsStar.addEdge(&n2, &n1, 20);
+    fsStar.addEdge(&n2, &n1, 30);
 
-    cout << "good?";
+    cout << "good?" << endl;
+
+    FStarIterator::NodeIterator start = fsStar.begin_nodes();
+    FStarIterator::NodeIterator end = fsStar.end_nodes();
+
+    for (FStarIterator::NodeIterator it = start; it != end; ++it) {
+        cout << (*it)->name << "\n";
+    }
+    cout << endl;
+
+    for (FStarIterator::EdgeIterator it = fsStar.begin_edges(); it != fsStar.end_edges(); ++it) {
+        cout << (*it).from->name << " --[" << (*it).weight << "]-> " << (*it).to->name << "\n";
+    }
+
+
     return 0;
 }
