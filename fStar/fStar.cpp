@@ -9,7 +9,7 @@
 #include <stdexcept>
 
 
-
+using namespace fStar;
 
 FStar::FStar() {
     //this->Nodes = new map<int, Node*>();

@@ -9,7 +9,9 @@ include_directories(external/ftxui/include)
 add_executable(IOA_semestralka
         main.cpp
         fStar/fStar.cpp
-        fStar/fStar.hpp)
+        fStar/fStar.hpp
+        gui/gui.cpp
+        gui/gui.hpp)
 
 #add_executable(main main.cpp)
 target_link_libraries(IOA_semestralka

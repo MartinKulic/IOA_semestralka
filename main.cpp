@@ -5,20 +5,21 @@
 #include <iostream>
 
 #include "fStar/fStar.hpp"
+#include "gui/gui.hpp"
 
 using namespace std;
-
+using namespace fStar;
 int main() {
-    Node n0 = Node({0,0, 0, "node 0"});
-    Node n1 = Node({10,0, 1, "node 1"});
-    Node n2 = Node({0,10, 2, "node 2"});
+    fStar::Node n0 = fStar::Node({0,0, 0, "node 0"});
+    fStar::Node n1 = fStar::Node({10,0, 1, "node 1"});
+    fStar::Node n2 = fStar::Node({0,10, 2, "node 2"});
 
     FStar fsStar = FStar();
     fsStar.addEdge(&n0, &n1, 10);
     fsStar.addEdge(&n1, &n0, 10);
     fsStar.addEdge(&n0, &n2, 20);
 
-    fsStar.addEdge(&n2, &n1, 10);
+    fsStar.addEdge(&n1, &n2, 10);
     fsStar.addEdge(&n2, &n1, 30);
 
     cout << "good?" << endl;
@@ -35,6 +36,10 @@ int main() {
         cout << (*it).from->name << " --[" << (*it).weight << "]-> " << (*it).to->name << "\n";
     }
 
+    gui g = gui(&fsStar);
+    g.run();
 
+    char ch;
+    cin >> ch;
     return 0;
 }
