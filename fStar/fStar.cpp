@@ -29,6 +29,19 @@ FStarNodeEdges * FStar::_addNode_encap(Node *node) {
         throw std::invalid_argument("Node with id" + to_string(node->id) + " already exists.");
     }
 
+    if (node->x > this->maxX) {
+        this->maxX = node->x;
+    }
+    if (node->x < this->minX) {
+        this->minX = node->x;
+    }
+    if (node->y > this->maxY) {
+        this->maxY = node->y;
+    }
+    if (node->y < this->minY) {
+        this->minY = node->y;
+    }
+
     FStarNodeEdges* nodeRecord = new FStarNodeEdges();
     nodeRecord->node_from = node;
     (*this->Edges)[node->id] = nodeRecord;
@@ -66,14 +79,15 @@ void FStar::addEdge(Node *from, Node *to, float weight) {
     if (edgeIndex != -1) {
         std::cerr << "Edge from " << _fsr_nodeFromEdges->node_from->id << " to " << to->id << " already exists. Ignoring error rewriting value" << std::endl;
         _fsr_nodeFromEdges->_edges->erase(_fsr_nodeFromEdges->_edges->begin() + edgeIndex);
+        this->numEdges--;
     }
 
-    FStarEdgeEntry* edge = new FStarEdgeEntry();
-    edge->node_to = to;
-    edge->weight = weight;
+    FStarEdgeEntry edge = FStarEdgeEntry();
+    edge.node_to = to;
+    edge.weight = weight;
 
-    _fsr_nodeFromEdges->_edges->push_back(*edge);
-
+    _fsr_nodeFromEdges->_edges->push_back(edge);
+    this->numEdges++;
 }
 
 FStar::~FStar() {
@@ -86,6 +100,8 @@ FStar::~FStar() {
         //delete(node_edges)->node_from;
         delete(node_edges);
     }
+
+    delete(Edges);
     // for (auto const& rec : *Nodes) {
     //     auto node = rec.second;
     //     delete(node);
