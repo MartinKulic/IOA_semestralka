@@ -36,7 +36,16 @@ int main() {
         cout << (*it).from->name << " --[" << (*it).weight << "]-> " << (*it).to->name << "\n";
     }
 
-    gui g = gui(&fsStar);
+    Transformer t;
+    float scale = gui::scaleFactor;
+    auto scaleOperation = Transformer::Scale(&scale);
+    float mx = gui::moveX;
+    float my = gui::moveY;
+    auto moveOperation = Transformer::Move(&mx, &my);
+    t+=scaleOperation;
+    t+=moveOperation;
+
+    gui g = gui(&fsStar, &t);
     g.run();
 
     char ch;

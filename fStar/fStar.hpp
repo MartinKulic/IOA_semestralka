@@ -11,10 +11,13 @@
 
 using namespace std;
 namespace fStar {
+    struct coor {
+        float x;
+        float y;
+    };
+
     //template <typedef node_id_type>
-    struct Node {
-        int x;
-        int y;
+    struct Node : public coor {
         int id;
         string name;
     };
