@@ -118,6 +118,8 @@ namespace fStar {
     protected:
         map<int, FStarNodeEdges*>* Edges;
         //map<int, Node*>* Nodes;
+        float minX, maxX, minY, maxY;
+        size_t numEdges = 0;
 
         FStarNodeEdges* _findNodeEdges_encap(Node* node);
         FStarNodeEdges* _addNode_encap(Node* node);
@@ -127,6 +129,14 @@ namespace fStar {
 
         void addNode(Node* node);
         void addEdge(Node* from, Node* to, float weight);
+
+        size_t sizeNodes(){return this->Edges->size();}
+        size_t sizeEdges(){return numEdges;};
+
+        float getMaxX(){return maxX;};
+        float getMinX(){return minX;};
+        float getMaxY(){return maxY;};
+        float getMinY(){return minY;};
 
         FStarIterator::NodeIterator begin_nodes() {
             return FStarIterator::NodeIterator(Edges->begin());
