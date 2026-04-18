@@ -53,6 +53,9 @@ class Transformer {
     static auto Move(float* moveX, float* moveY) {
         return [moveX, moveY](coor cor){ return coor({(cor.x+*moveX),(cor.y+*moveY)}) ;};
     }
+    static auto FlipY(float* height) {
+        return [height](coor cor){ return coor({(cor.x),*height-(cor.y)}) ;};
+    }
 };
 
 
@@ -71,7 +74,7 @@ private:
             int x = cor.x;
             int y = cor.y;
             //c.DrawPointCircle(x, y, 5);
-            c.DrawPointEllipse(x+5,y,9,4);
+            //c.DrawPointEllipse(x+5,y,9,4);
             c.DrawText(x, y, node->name);
         }
     }
@@ -92,19 +95,19 @@ private:
             int textX = (x1+x2)/2;
             int textY = (y1+y2)/2;
 
-            if (edge.from->id < edge.to->id) {
-                //nad line
-                c.DrawText(textX,textY-3, to_string(edge.weight));
-            }
-            else {
-                //pod
-                c.DrawText(textX,textY+2, to_string(edge.weight));
-            }
+            // if (edge.from->id < edge.to->id) {
+            //     //nad line
+            //     c.DrawText(textX,textY-3, to_string(edge.weight));
+            // }
+            // else {
+            //     //pod
+            //     c.DrawText(textX,textY+2, to_string(edge.weight));
+            // }
         }
     }
 public:
-    static inline const float scaleFactor = 4.5;
-    static inline const float moveX = 10;
+    static inline const float scaleFactor = 1;
+    static inline const float moveX = 1;
     static inline const float moveY = 10;
 
 

@@ -53,7 +53,8 @@ namespace fStar {
             NodeIterator(map<int, FStarNodeEdges*>::iterator it) : it(it) {}
 
             virtual NodeIterator& operator++() {
-                ++it; return *this;
+                ++it;
+                return *this;
             }
 
             virtual bool operator!=(const NodeIterator& other) const {
@@ -110,6 +111,27 @@ namespace fStar {
                 return Edge({map_it->second->node_from, edge_entry.node_to, edge_entry.weight});
             }
         };
+
+        class OutEdgeIterator {
+        private:
+            vector<FStarEdgeEntry>::iterator it;
+            Node* node_from;
+        public:
+            OutEdgeIterator(vector<FStarEdgeEntry>::iterator iterator, Node* from) : it(iterator), node_from(from) {};
+
+            virtual OutEdgeIterator& operator++() {
+                ++it;
+                return *this;
+            }
+
+            virtual bool operator!=(const OutEdgeIterator& other) const {
+                return it != other.it;
+            }
+
+            virtual Edge operator*() const {
+                return Edge({node_from, it->node_to, it->weight});
+            }
+        };
     };
 
 
@@ -130,6 +152,8 @@ namespace fStar {
         void addNode(Node* node);
         void addEdge(Node* from, Node* to, float weight);
 
+        Node* getNode(int id){return (*Edges)[id]->node_from;};
+
         size_t sizeNodes(){return this->Edges->size();}
         size_t sizeEdges(){return numEdges;};
 
@@ -141,17 +165,28 @@ namespace fStar {
         FStarIterator::NodeIterator begin_nodes() {
             return FStarIterator::NodeIterator(Edges->begin());
         }
-
         FStarIterator::NodeIterator end_nodes() {
             return FStarIterator::NodeIterator(Edges->end());
         }
+
         FStarIterator::EdgeIterator begin_edges() {
             return FStarIterator::EdgeIterator(Edges->begin(), Edges->end());
         }
-
         FStarIterator::EdgeIterator end_edges() {
             return FStarIterator::EdgeIterator(Edges->end(), Edges->end());
         }
+
+        FStarIterator::OutEdgeIterator begin_out_edges(int node_from_id) {
+            FStarNodeEdges* _node_edg = (*this->Edges)[node_from_id];
+
+            return FStarIterator::OutEdgeIterator(_node_edg->_edges->begin(), _node_edg->node_from);
+        }
+        FStarIterator::OutEdgeIterator end_out_edges(int node_from_id) {
+            FStarNodeEdges* _node_edg = (*this->Edges)[node_from_id];
+
+            return FStarIterator::OutEdgeIterator(_node_edg->_edges->end(), _node_edg->node_from);
+        }
+
         ~FStar();
     };
 }
