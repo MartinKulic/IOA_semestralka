@@ -13,7 +13,10 @@
 #include "ftxui/screen/color.hpp"  // for Color, Color::Red, Color::Blue, Color::Green, ftxui
 
 #include "../fStar/fStar.hpp"
+#include "../fStar/Alg.hpp"
 #include <functional>
+
+#include "ftxui/dom/table.hpp"
 
 using namespace ftxui;
 using namespace fStar;
@@ -64,6 +67,7 @@ class gui {
 private:
     FStar* fstar;
     Canvas c;// = Canvas(100, 100);
+    ftxui::Table t;
     Transformer* transformer;
 
     void DrawNodes() {
@@ -105,6 +109,43 @@ private:
             // }
         }
     }
+
+    void DrawTable() {
+        DistanceMatrix dm = DistanceMatrix(fstar);
+
+        vector<vector<string>> v = vector<vector<string>>();
+        vector<string> first_row = vector<string>();
+        first_row.push_back("node");
+        for (int i = 0; i < dm.size(); i++) {
+            first_row.push_back(to_string(i));
+        }
+        v.push_back(first_row);
+
+        for (int i = 0; i < dm.size(); i++) {
+            vector<string> row = vector<string>();
+            row.push_back(to_string(i));
+            for (const float* ii = dm[i]; ii < dm[i] + dm.size(); ii++) {
+                row.push_back(to_string(*ii));
+            }
+            v.push_back(row);
+        }
+        t = Table(v);
+        t.SelectRows(0,-1).SeparatorVertical(LIGHT);
+        t.SelectColumns(0,-1).SeparatorHorizontal(LIGHT);
+
+        t.SelectAll().Border(LIGHT);
+        t.SelectRow(0).Decorate(bold);
+        t.SelectRow(0).SeparatorVertical(LIGHT);
+        t.SelectRow(0).Border(HEAVY);
+        t.SelectRow(0).DecorateCells(center);
+
+        t.SelectColumn(0).Decorate(bold);
+        t.SelectColumn(0).SeparatorHorizontal(LIGHT);
+        t.SelectColumn(0).Border(HEAVY);
+        t.SelectColumn(0).DecorateCells(center);
+
+
+    }
 public:
     static inline const float scaleFactor = 1;
     static inline const float moveX = 1;
@@ -119,8 +160,10 @@ public:
 
         DrawEdges();
         DrawNodes();
+        //DrawTable();
 
         auto document = canvas(&c) | border;
+        //auto document = t.Render();
         auto screen = Screen::Create(Dimension::Fit(document));
         Render(screen, document);
         screen.Print();
