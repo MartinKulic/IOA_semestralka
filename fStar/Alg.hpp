@@ -84,6 +84,10 @@ public:
         return Distances[from];
     }
 
+    int size() const {
+        return fstar->sizeNodes();
+    }
+
     ~DistanceMatrix() {
         for (int i = 0; i < fstar->sizeNodes(); i++) {
             delete[] Distances[i];
