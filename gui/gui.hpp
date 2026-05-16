@@ -77,7 +77,7 @@ private:
             // Text vykres¾ujeme na znakové súradnice plátna. 
             // V FTXUI Canvas::DrawText berie sub-pixelové súradnice, preto násobíme:
             int sub_x = cor.x * 2;
-            int sub_y = cor.y * 4;
+            int sub_y = cor.y * 2;
 
             if (selected_node == node) {
                 c.DrawText(sub_x, sub_y, "> " + node->name + " <");
@@ -94,7 +94,14 @@ private:
             coor c1 = transformer->transform(edge.from);
             coor c2 = transformer->transform(edge.to);
             // Èiary kreslíme v sub-pixeloch plátna
-            c.DrawPointLine(c1.x * 2, c1.y * 4, c2.x * 2, c2.y * 4);
+            c.DrawPointLine(c1.x * 2, c1.y * 2, c2.x * 2, c2.y * 2);
+
+            if (c1.x >= c2.x) {
+                coor t = coor();
+                t.x = (c1.x + c2.x)/2;
+                t.y = (c1.y + c2.y)/2;
+                c.DrawText(t.x * 2, t.y * 2, to_string( edge.weight ));
+            }
         }
     }
 
@@ -103,7 +110,7 @@ private:
         // m_x a m_y sú relatívne znakové súradnice vo vnútri borderu grafu
         // Prepoèítame ich na strednú hodnotu sub-pixelov Braille matice
         int target_sub_x = mouse_x * 2;
-        int target_sub_y = mouse_y * 4;
+        int target_sub_y = mouse_y * 2;
 
         const int tolerance = 4; // Tolerancia zásahu v sub-pixeloch
         selected_node = nullptr;
@@ -113,7 +120,7 @@ private:
             coor cor = transformer->transform(node);
 
             int node_sub_x = cor.x * 2;
-            int node_sub_y = cor.y * 4;
+            int node_sub_y = cor.y;
 
             // Výpoèet vzdialenosti v sub-pixelovom priestore plátna
             if (std::abs(node_sub_x - target_sub_x) <= tolerance &&
