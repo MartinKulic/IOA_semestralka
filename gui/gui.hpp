@@ -60,12 +60,12 @@ private:
             // Èiary kreslíme v sub-pixeloch plátna
             c.DrawPointLine(c1.x * 2, c1.y * 2, c2.x * 2, c2.y * 2);
 
-            if (c1.x >= c2.x) {
+            //if (c1.x >= c2.x) {
                 coor t = coor();
                 t.x = (c1.x + c2.x)/2;
                 t.y = (c1.y + c2.y)/2;
-                c.DrawText(t.x * 2, t.y * 2, to_string( edge.weight ));
-            }
+                c.DrawText(t.x * 2, t.y * 2, std::to_string( edge.weight ));
+            //}
         }
     }
 
@@ -185,10 +185,22 @@ private:
             if (selected_node != nullptr) {
                 coor cor = transformer->transform(selected_node);
                 menu_elements.push_back(text(" Edit Node ") | bold | color(Color::Green));
+
                 menu_elements.push_back(separator());
+
                 menu_elements.push_back(text("Name: " + selected_node->name));
+                menu_elements.push_back(text("Pos X: " + std::to_string(selected_node->x)));
+                menu_elements.push_back(text("Pos Y: " + std::to_string(selected_node->y)));
                 menu_elements.push_back(text("Drawed X: " + std::to_string(cor.x)));
                 menu_elements.push_back(text("Drawed Y: " + std::to_string(cor.y)));
+
+                menu_elements.push_back(separator());
+
+                FStarIterator::OutEdgeIterator end = fstar->end_out_edges(selected_node->id);
+                for (FStarIterator::OutEdgeIterator it = fstar->begin_out_edges(selected_node->id); it != end; ++it) {
+                    fStar::Edge edge = *it;
+                    menu_elements.push_back(text( " -[" + std::to_string(edge.weight) + "]-> (" + std::to_string( edge.to->id ) + ") " + edge.to->name ));
+                }
             }
             else {
                 menu_elements.push_back(text(" MENU ") | bold);
