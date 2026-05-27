@@ -4,10 +4,14 @@
 #include <memory>
 
 #include <string>
+#include <limits.h>
 #include <format>
+#include <math.h>
 
 #include "Transformer.h"
+#include "../fStar/Alg.hpp"
 #include "../fStar/fStar.hpp"
+#include "ftxui/dom/table.hpp"
 
 
 using namespace ftxui;
@@ -18,6 +22,7 @@ private:
     FStar* fstar;
     Canvas c;
     Transformer* transformer;
+    DistanceMatrix* D;
 
     float _canvas_zoom = 1.0f;
     float _canvas_pan_x = 10.0f;
@@ -26,8 +31,11 @@ private:
 
     int graph_panel_size = 70;
 
-    // selected Node
+    // Tab state: 0 = Graph, 1 = Distance Matrix
+    int active_tab = 0;
+
     fStar::Node* selected_node = nullptr;
+    // for pan
     int last_mouse_x = 0;
     int last_mouse_y = 0;
     int canvas_mouse_x = 0;
@@ -38,9 +46,7 @@ private:
             fStar::Node* node = *it;
             coor cor = transformer->transform(node);
 
-            // Text vykres¾ujeme na znakové súradnice plátna. 
-            // V FTXUI Canvas::DrawText berie sub-pixelové súradnice, preto násobíme:
-            int sub_x = cor.x * 2;
+            int sub_x = cor.x * 2; // Canvas works with sub pixels
             int sub_y = cor.y * 2;
 
             if (selected_node == node) {
@@ -57,14 +63,14 @@ private:
             fStar::Edge edge = *it;
             coor c1 = transformer->transform(edge.from);
             coor c2 = transformer->transform(edge.to);
-            // Èiary kreslíme v sub-pixeloch plátna
-            c.DrawPointLine(c1.x * 2, c1.y * 2, c2.x * 2, c2.y * 2);
+
+            c.DrawPointLine(c1.x * 2, c1.y * 2, c2.x * 2, c2.y * 2); // in sub-pixels
 
             //if (c1.x >= c2.x) {
                 coor t = coor();
-                t.x = (c1.x + c2.x)/2;
-                t.y = (c1.y + c2.y)/2;
-                c.DrawText(t.x * 2, t.y * 2, std::to_string( edge.weight ));
+                t.x = (c1.x + c2.x);
+                t.y = (c1.y + c2.y);
+                c.DrawText(t.x, t.y, std::to_string( edge.weight )); // in middle of points - (c1.x + c2.x)/2
             //}
         }
     }
@@ -179,7 +185,7 @@ private:
         return graphComponent;
     }
 
-    auto MenuComponent() {
+    Component MenuComponent() {
         auto menu_component = Renderer([&] {
             Elements menu_elements;
             if (selected_node != nullptr) {
@@ -216,6 +222,64 @@ private:
         return menu_component;
     }
 
+    Component MatrixComponent() {
+        return Renderer([&] {
+            Elements rows;
+            rows.push_back(text(" Distance Matrix ") | bold | color(Color::Cyan));
+            rows.push_back(separator());
+
+            if (!D) {
+                rows.push_back(text("No matrix available."));
+                return vbox(std::move(rows)) | border;
+            }
+
+            // Header row: node names
+            Elements header_cells;
+            header_cells.push_back(text("     ") | size(WIDTH, EQUAL, 8));
+
+            std::vector<std::vector<string>> tableData = std::vector<std::vector<string>>();
+
+            vector<string> firstRow = vector<string>(1);
+            fStar::FStarIterator::NodeIterator end = fstar->end_nodes();
+            for (fStar::FStarIterator::NodeIterator i = fstar->begin_nodes(); i != end; ++i) {
+                firstRow.push_back((*i)->name);
+            }
+            tableData.push_back(firstRow);
+
+
+            for (fStar::FStarIterator::NodeIterator it = fstar->begin_nodes(); it != end; ++it) {
+                vector<string> row = vector<string>();
+                row.push_back((*it)->name);
+                for (fStar::FStarIterator::NodeIterator it2 = fstar->begin_nodes(); it2 != end; ++it2) {
+                    const float curWeigt = (*D)[(*it)->id][(*it2)->id];
+                    row.push_back(std::to_string(curWeigt));
+                }
+                tableData.push_back(row);
+            }
+
+            auto table = ftxui::Table(tableData);
+            table.SelectRows(0,-1).SeparatorVertical(LIGHT);
+            table.SelectColumns(0,-1).SeparatorHorizontal(LIGHT);
+
+            table.SelectAll().Border(LIGHT);
+            table.SelectRow(0).Decorate(bold);
+            table.SelectRow(0).SeparatorVertical(LIGHT);
+            table.SelectRow(0).Border(HEAVY);
+            table.SelectRow(0).DecorateCells(center);
+
+            table.SelectColumn(0).Decorate(bold);
+            table.SelectColumn(0).SeparatorHorizontal(LIGHT);
+            table.SelectColumn(0).Border(HEAVY);
+            table.SelectColumn(0).DecorateCells(center);
+
+
+            rows.push_back(table.Render());
+
+
+            return vbox(std::move(rows)) | border | flex;
+        });
+    }
+
 public:
 
     gui(FStar* fstar) : fstar(fstar) {
@@ -223,9 +287,12 @@ public:
         *transformer += Transformer::Scale(&_canvas_zoom);
         *transformer += Transformer::Move(&_canvas_pan_x, &_canvas_pan_y);
         *transformer += Transformer::FlipY(0.0);
+
+        this->D = new DistanceMatrix(fstar);
     }
     ~gui() {
         delete transformer;
+        delete D; // !!!!
     }
 
     void run() {
@@ -233,15 +300,33 @@ public:
 
         auto graph_component = GraphComponent();
         auto menu_component = MenuComponent();
+        auto matrix_component = MatrixComponent();
 
-        auto main_container = ResizableSplitLeft(graph_component, menu_component, &graph_panel_size);
-        auto main_component = CatchEvent(main_container, [&](Event event) {
+        // Tab bar //leftpanel + right pannel
+        std::vector<std::string> tab_labels = { " Graph ", " Distance Matrix " };
+        auto tab_bar = Toggle(&tab_labels, &active_tab);
+        auto tab_content = Container::Tab(
+                    { graph_component, matrix_component },
+                    &active_tab
+                );
+        auto leftContainer = Container::Vertical({ tab_bar, tab_content });
+
+        auto full_view = ResizableSplitLeft(leftContainer, menu_component, &graph_panel_size);
+
+
+
+        auto main_component = CatchEvent(full_view, [&](Event event) {
             if (event == Event::Character('q')) {
                 screen.ExitLoopClosure()();
                 return true;
             }
+            // 'r' shortcut to recalculate matrix from anywhere
+            if (event == Event::Character('r')) {
+                //RebuildDistanceMatrix();
+                return true;
+            }
             return false;
-            });
+        });
 
         screen.Loop(main_component);
     }
