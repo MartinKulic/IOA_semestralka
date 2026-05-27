@@ -76,18 +76,11 @@ int main() {
         cout << endl;
     }
 
-    Transformer t;
-    float scale = gui::scaleFactor;
-    auto scaleOperation = Transformer::Scale(&scale);
-    float mx = gui::moveX;
-    float my = gui::moveY;
-    auto moveOperation = Transformer::Move(&mx, &my);
-    float height = 100;
-    t+=scaleOperation;
-    t+=moveOperation;
-    t+=Transformer::FlipY(&height);
-
-    gui g = gui(&fsStar, &t);
+    //float height = 100;
+    //t+=Transformer::FlipY(&height);
+    //
+    //gui g = gui(&fsStar, &t);
+    gui g = gui(&fsStar);
     g.run();
 
     char ch;

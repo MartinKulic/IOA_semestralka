@@ -13,7 +13,9 @@ add_executable(IOA_semestralka
         gui/gui.cpp
         gui/gui.hpp
         fStar/Alg.cpp
-        fStar/Alg.hpp)
+        fStar/Alg.hpp
+        gui/Transformer.cpp
+        gui/Transformer.h)
 
 #add_executable(main main.cpp)
 target_link_libraries(IOA_semestralka
