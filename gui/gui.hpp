@@ -96,26 +96,11 @@ private:
         }
     }
 
-public:
-
-    gui(FStar* fstar) : fstar(fstar) {
-        this->transformer = new Transformer();
-        *transformer += Transformer::Scale(&_canvas_zoom);
-        *transformer += Transformer::Move(&_canvas_pan_x, &_canvas_pan_y);
-        *transformer += Transformer::FlipY(0.0);
-    }
-    ~gui() {
-        delete transformer;
-    }
-
-    void run() {
-        auto screen = ScreenInteractive::Fullscreen();
-
-
-        auto graph_component = Renderer([&] {
+    Component GraphComponent() {
+        auto graphContainer = Renderer([&] {
             // automatically scale gaph
-            int dynamic_w = graph_panel_size*2;
-            int dynamic_h = std::max(200, static_cast<int>(300 * _canvas_zoom));
+            int dynamic_w = std::max(100, graph_panel_size*2);
+            int dynamic_h = std::max(270, static_cast<int>(300 * _canvas_zoom));
 
             c = Canvas(dynamic_w, dynamic_h);
             DrawEdges();
@@ -125,8 +110,7 @@ public:
                 " | PanX: " + std::to_string((int)_canvas_pan_x) +
                 " | PanY: " + std::to_string((int)_canvas_pan_y) +
                 " | MouseX: " + std::to_string(canvas_mouse_x) +
-                " | MouseY: " + std::to_string(canvas_mouse_y) +
-                    "sidePanel" + std::to_string(graph_panel_size);
+                " | MouseY: " + std::to_string(canvas_mouse_y);
 
             return vbox({
                 canvas(&c) | flex,
@@ -135,7 +119,8 @@ public:
                 }) | border;
             });
 
-        graph_component = CatchEvent(graph_component, [&](Event event) {
+        // Events
+        auto graphComponent = CatchEvent(graphContainer, [&](Event event) {
             if (event.is_mouse()) {
                 auto mouse = event.mouse();
 
@@ -191,31 +176,54 @@ public:
             }
             return false;
             });
+        return graphComponent;
+    }
 
-        // Right menu
+    auto MenuComponent() {
         auto menu_component = Renderer([&] {
             Elements menu_elements;
             if (selected_node != nullptr) {
                 coor cor = transformer->transform(selected_node);
-                menu_elements.push_back(text(" EDITÁCIA VRCHOLA ") | bold | color(Color::Green));
+                menu_elements.push_back(text(" Edit Node ") | bold | color(Color::Green));
                 menu_elements.push_back(separator());
-                menu_elements.push_back(text("Názov: " + selected_node->name));
-                menu_elements.push_back(text("Vykreslené X: " + std::to_string(cor.x)));
-                menu_elements.push_back(text("Vykreslené Y: " + std::to_string(cor.y)));
+                menu_elements.push_back(text("Name: " + selected_node->name));
+                menu_elements.push_back(text("Drawed X: " + std::to_string(cor.x)));
+                menu_elements.push_back(text("Drawed Y: " + std::to_string(cor.y)));
             }
             else {
                 menu_elements.push_back(text(" MENU ") | bold);
                 menu_elements.push_back(separator());
-                menu_elements.push_back(text("Klikni na vrchol pre výber."));
+                menu_elements.push_back(text("Clickt on node to select."));
             }
             //menu_elements.push_back(vfill());
             menu_elements.push_back(separator());
-            menu_elements.push_back(text("[Stlaè 'q' pre ukonèenie]") | dim);
+            menu_elements.push_back(text("[q to exit]") | dim);
             return vbox(std::move(menu_elements)) | border;
             });
 
+        return menu_component;
+    }
+
+public:
+
+    gui(FStar* fstar) : fstar(fstar) {
+        this->transformer = new Transformer();
+        *transformer += Transformer::Scale(&_canvas_zoom);
+        *transformer += Transformer::Move(&_canvas_pan_x, &_canvas_pan_y);
+        *transformer += Transformer::FlipY(0.0);
+    }
+    ~gui() {
+        delete transformer;
+    }
+
+    void run() {
+        auto screen = ScreenInteractive::Fullscreen();
+
+        auto graph_component = GraphComponent();
+        auto menu_component = MenuComponent();
+
         auto main_container = ResizableSplitLeft(graph_component, menu_component, &graph_panel_size);
-        auto global_component = CatchEvent(main_container, [&](Event event) {
+        auto main_component = CatchEvent(main_container, [&](Event event) {
             if (event == Event::Character('q')) {
                 screen.ExitLoopClosure()();
                 return true;
@@ -223,6 +231,6 @@ public:
             return false;
             });
 
-        screen.Loop(global_component);
+        screen.Loop(main_component);
     }
 };
