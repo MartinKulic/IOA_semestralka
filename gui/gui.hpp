@@ -41,6 +41,15 @@ private:
     int canvas_mouse_x = 0;
     int canvas_mouse_y = 0;
 
+    //for edit
+    std::string edit_name = "";
+    std::string edit_x = "";
+    std::string edit_y = "";
+
+    //for add new node
+
+    //for add
+
     void DrawNodes() {
         for (FStarIterator::NodeIterator it = fstar->begin_nodes(); it != fstar->end_nodes(); ++it) {
             fStar::Node* node = *it;
@@ -76,11 +85,11 @@ private:
     }
 
     void FindClickedNode(int mouse_x, int mouse_y) {
-        selected_node = nullptr;
+
         if (mouse_x > this->graph_panel_size) {
             return;
         }
-
+        selected_node = nullptr;
         int target_sub_x = mouse_x * 2;
         int target_sub_y = mouse_y * 2;
 
@@ -186,7 +195,27 @@ private:
     }
 
     Component MenuComponent() {
-        auto menu_component = Renderer([&] {
+        auto name_input  = Input(&edit_name,  "node name");
+        auto x_input     = Input(&edit_x,     "X coord");
+        auto y_input     = Input(&edit_y,     "Y coord");
+
+        auto apply_button = Button("  Apply Changes  ", [&] { /*ApplyNodeEdits();*/; });
+        auto delete_node_button = Button("  Delete node  ", [&]() {
+            fstar->deleteNode(selected_node->id);
+            selected_node = nullptr;
+        });
+
+        auto container = Container::Vertical({
+            name_input,
+            x_input,
+            y_input,
+            apply_button,
+            delete_node_button,
+        });
+
+
+
+        return  Renderer(container, [&, name_input, x_input, y_input, apply_button, delete_node_button] {
             Elements menu_elements;
             if (selected_node != nullptr) {
                 coor cor = transformer->transform(selected_node);
@@ -194,11 +223,18 @@ private:
 
                 menu_elements.push_back(separator());
 
-                menu_elements.push_back(text("Name: " + selected_node->name));
-                menu_elements.push_back(text("Pos X: " + std::to_string(selected_node->x)));
-                menu_elements.push_back(text("Pos Y: " + std::to_string(selected_node->y)));
+                menu_elements.push_back(hbox({ text("Name : "), name_input->Render() }));
+                menu_elements.push_back(hbox({ text("Pos X : "), x_input->Render() }));
+                menu_elements.push_back(hbox({ text("Pos Y : "), y_input->Render() }));
+
                 menu_elements.push_back(text("Drawed X: " + std::to_string(cor.x)));
                 menu_elements.push_back(text("Drawed Y: " + std::to_string(cor.y)));
+
+                menu_elements.push_back(separator());
+                // Apply button
+                menu_elements.push_back(
+                    apply_button -> Render()
+                );
 
                 menu_elements.push_back(separator());
 
@@ -207,6 +243,9 @@ private:
                     fStar::Edge edge = *it;
                     menu_elements.push_back(text( " -[" + std::to_string(edge.weight) + "]-> (" + std::to_string( edge.to->id ) + ") " + edge.to->name ));
                 }
+                menu_elements.push_back(
+                  delete_node_button -> Render()
+                );
             }
             else {
                 menu_elements.push_back(text(" MENU ") | bold);
@@ -216,10 +255,24 @@ private:
             //menu_elements.push_back(vfill());
             menu_elements.push_back(separator());
             menu_elements.push_back(text("[q to exit]") | dim);
+
             return vbox(std::move(menu_elements)) | border;
             });
 
-        return menu_component;
+
+        // // Wrap so keyboard events reach the Input children
+        // auto container = Container::Vertical({
+        //     name_input, x_input, y_input,
+        // });
+        //
+        // return CatchEvent(
+        //     Renderer(container, [menu_component, container] {
+        //         return menu_component->Render();
+        //     }),
+        //     [&](Event e) {
+        //         return false; // let children handle keyboard
+        //     }
+        // );
     }
 
     Component MatrixComponent() {
@@ -289,6 +342,8 @@ public:
         *transformer += Transformer::FlipY(0.0);
 
         this->D = new DistanceMatrix(fstar);
+
+        selected_node = fstar->getNode(1);
     }
     ~gui() {
         delete transformer;
@@ -304,15 +359,33 @@ public:
 
         // Tab bar //leftpanel + right pannel
         std::vector<std::string> tab_labels = { " Graph ", " Distance Matrix " };
-        auto tab_bar = Toggle(&tab_labels, &active_tab);
-        auto tab_content = Container::Tab(
-                    { graph_component, matrix_component },
-                    &active_tab
-                );
-        auto leftContainer = Container::Vertical({ tab_bar, tab_content });
+        auto tab_toggle = Toggle(&tab_labels, &active_tab);
 
-        auto full_view = ResizableSplitLeft(leftContainer, menu_component, &graph_panel_size);
+        auto tab_container = Container::Tab(
+            {
+                graph_component,
+                matrix_component
+            },
+            &active_tab
+        );
 
+        auto left_container = Container::Vertical({
+            tab_toggle,
+            tab_container
+        });
+
+        auto left_renderer = Renderer(left_container, [&] {
+            return vbox({
+                tab_toggle->Render(),
+                tab_container->Render() | flex,
+            });
+        });
+
+        auto full_view = ResizableSplitLeft(
+            left_renderer,
+            menu_component,
+            &graph_panel_size
+        );
 
 
         auto main_component = CatchEvent(full_view, [&](Event event) {

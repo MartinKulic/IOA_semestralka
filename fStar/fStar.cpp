@@ -63,6 +63,9 @@ void FStar::addNode(Node *node) {
     this->_addNode_encap(node);
 }
 
+void FStar::deleteNode(int nodeFrom) {
+    ;
+}
 void FStar::addEdge(Node *from, Node *to, float weight) {
     FStarNodeEdges* _fsr_nodeFromEdges = this->_findNodeEdges_encap(from);
     if (_fsr_nodeFromEdges == nullptr) {

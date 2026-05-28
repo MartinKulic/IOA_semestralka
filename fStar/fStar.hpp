@@ -151,6 +151,8 @@ namespace fStar {
 
         void addNode(Node* node);
         void addEdge(Node* from, Node* to, float weight);
+        void deleteNode(int nodeId);
+        void deleteEdge(int fromNodeId, int toNodeId, bool oneway=false);
 
         Node* getNode(int id){return (*Edges)[id]->node_from;};
 
