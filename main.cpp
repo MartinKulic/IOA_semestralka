@@ -60,21 +60,39 @@ int main() {
         cout << (*it).from->name << " --[" << (*it).weight << "]-> " << (*it).to->name << "\n";
     }
 
-    cout << "out edges iterator" <<endl;
-    for (FStarIterator::OutEdgeIterator it = fsStar.begin_out_edges(7); it != fsStar.end_out_edges(7); ++it) {
-        cout << (*it).from->name << " --[" << (*it).weight << "]-> " << (*it).to->name << "\n";
-    }
+    // cout << "out edges iterator" <<endl;
+    // for (FStarIterator::OutEdgeIterator it = fsStar.begin_out_edges(7); it != fsStar.end_out_edges(7); ++it) {
+    //     cout << (*it).from->name << " --[" << (*it).weight << "]-> " << (*it).to->name << "\n";
+    // }
 
     cout << "Num of nodes: " << fsStar.sizeNodes() << "\nNum of edges: " << fsStar.sizeEdges() << "\n";
 
-    DistanceMatrix dm = DistanceMatrix(&fsStar);
-
-    for (int i = 0; i < fsStar.sizeNodes(); i++) {
-        for (int j = 0; j < fsStar.sizeNodes(); j++) {
-            cout << dm[i][j] << " ";
-        }
-        cout << endl;
-    }
+    // fsStar.deleteNode(2);
+    //
+    // cout << "Node iterator" << endl;
+    // for (FStarIterator::NodeIterator it = start; it != end; ++it) {
+    //     cout << (*it)->name << "\n";
+    // }
+    // cout << endl;
+    //
+    // cout << "Edges iterator" << endl;
+    // for (FStarIterator::EdgeIterator it = fsStar.begin_edges(); it != fsStar.end_edges(); ++it) {
+    //     cout << (*it).from->name << " --[" << (*it).weight << "]-> " << (*it).to->name << "\n";
+    // }
+    // cout << "Num of nodes: " << fsStar.sizeNodes() << "\nNum of edges: " << fsStar.sizeEdges() << "\n";
+    //
+    // fsStar.deleteNode(3);
+    // cout << "Node iterator" << endl;
+    // for (FStarIterator::NodeIterator it = start; it != end; ++it) {
+    //     cout << (*it)->name << "\n";
+    // }
+    // cout << endl;
+    //
+    // cout << "Edges iterator" << endl;
+    // for (FStarIterator::EdgeIterator it = fsStar.begin_edges(); it != fsStar.end_edges(); ++it) {
+    //     cout << (*it).from->name << " --[" << (*it).weight << "]-> " << (*it).to->name << "\n";
+    // }
+    // cout << "Num of nodes: " << fsStar.sizeNodes() << "\nNum of edges: " << fsStar.sizeEdges() << "\n";
 
     //float height = 100;
     //t+=Transformer::FlipY(&height);

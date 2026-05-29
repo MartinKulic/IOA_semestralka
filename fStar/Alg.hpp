@@ -15,6 +15,7 @@ class DistanceMatrix {
 private:
     FStar* fstar;
     float** Distances;
+    int _size;
 
     struct index_weight_holder {
         float weight;
@@ -68,6 +69,7 @@ public:
             Distances[i] = new float[fstar->sizeNodes()]();
             std::fill(Distances[i], Distances[i] + fstar->sizeNodes(), std::numeric_limits<float>::infinity());
         }
+        this->_size = star->sizeNodes();
 
         // for (fStar::FStarIterator::EdgeIterator it = star->begin_edges(); it != star->end_edges(); ++it) {
         //     fStar::Edge edge = *it;
@@ -85,11 +87,11 @@ public:
     }
 
     int size() const {
-        return fstar->sizeNodes();
+        return this->_size;
     }
 
     ~DistanceMatrix() {
-        for (int i = 0; i < fstar->sizeNodes(); i++) {
+        for (int i = 0; i < this->size(); i++) {
             delete[] Distances[i];
         }
         delete[] Distances;

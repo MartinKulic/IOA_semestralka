@@ -39,6 +39,24 @@ namespace fStar {
         vector<FStarEdgeEntry>* _edges;
         FStarNodeEdges(){this->_edges = new vector<FStarEdgeEntry>();};
         ~FStarNodeEdges(){delete this->_edges;};
+
+        void deleteEdge(Node* to) {
+            //std::erase_if(this->_edges, [to](FStarEdgeEntry cur){return cur.node_to == to;});
+            int index = 0;
+            for (FStarEdgeEntry edge : *this->_edges) {
+                if (edge.node_to == to) {
+                    break;
+                }
+                index++;
+            }
+            if (_edges->at(index).node_to != to) {
+                return;
+                //not found
+            }
+
+            this->_edges->erase(this->_edges->begin() + index);
+
+        }
     };
 
     namespace FStarIterator {

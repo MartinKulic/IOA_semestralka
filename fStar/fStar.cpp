@@ -64,7 +64,29 @@ void FStar::addNode(Node *node) {
 }
 
 void FStar::deleteNode(int nodeFrom) {
-    ;
+    auto mapEntry = this->Edges->find(nodeFrom);
+    if (mapEntry == this->Edges->end()) {
+        //node is not in fStar
+        return;
+    }
+    FStarNodeEdges* nodeEdgesToDelete = mapEntry->second;
+    for (FStarEdgeEntry edge: *nodeEdgesToDelete->_edges) {
+        Node* neigbour = edge.node_to;
+        auto mapEntryN = this->Edges->find(neigbour->id);
+        if (mapEntryN == this->Edges->end()) {
+            //node is not in fStar
+            continue;
+        }
+        FStarNodeEdges* nodeEdgesN = mapEntryN->second;
+        nodeEdgesN->deleteEdge(nodeEdgesToDelete->node_from);
+        this->numEdges--;
+    }
+    this->numEdges -= nodeEdgesToDelete->_edges->size();
+
+    Node* nodeToDelete = nodeEdgesToDelete->node_from;
+    this->Edges->erase(mapEntry);
+    delete nodeEdgesToDelete;
+    //delete nodeToDelete;
 }
 void FStar::addEdge(Node *from, Node *to, float weight) {
     FStarNodeEdges* _fsr_nodeFromEdges = this->_findNodeEdges_encap(from);
