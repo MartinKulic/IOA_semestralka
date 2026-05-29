@@ -224,9 +224,9 @@ private:
 
         auto apply_button = Button("  Apply Changes  ", [&] { /*ApplyNodeEdits();*/; });
         auto delete_node_button = Button("  Delete node  ", [&]() {
-            fstar->deleteNode(selected_node->id);
             this->status_msg="Deleted node " + selected_node->name;
-            selected_node = nullptr;
+            fstar->deleteNode(selected_node->id);
+            SetSelectedNode(nullptr);
         });
 
         auto container = Container::Vertical({
