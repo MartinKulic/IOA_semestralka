@@ -50,6 +50,9 @@ private:
 
     //for add
 
+    // Status feedback
+    std::string status_msg = "Status msg";
+
     void DrawNodes() {
         for (FStarIterator::NodeIterator it = fstar->begin_nodes(); it != fstar->end_nodes(); ++it) {
             fStar::Node* node = *it;
@@ -84,16 +87,32 @@ private:
         }
     }
 
+    void SetSelectedNode(fStar::Node* node) {
+        if (node == nullptr) {
+            this->selected_node = nullptr;
+            this->edit_name = "";
+            this->edit_x = "";
+            this->edit_y = "";
+            return;
+        }
+        this->selected_node = node;
+        this->edit_name = node->name;
+        this->edit_x = std::to_string(node->x);
+        this->edit_y = std::to_string(node->y);
+
+    }
+
     void FindClickedNode(int mouse_x, int mouse_y) {
 
         if (mouse_x > this->graph_panel_size) {
             return;
         }
-        selected_node = nullptr;
+        SetSelectedNode(nullptr);
         int target_sub_x = mouse_x * 2;
         int target_sub_y = mouse_y * 2;
 
         const int tolerance = 4;
+
 
         for (FStarIterator::NodeIterator it = fstar->begin_nodes(); it != fstar->end_nodes(); ++it) {
             fStar::Node* node = *it;
@@ -102,10 +121,10 @@ private:
             int node_sub_x = cor.x * 2;
             int node_sub_y = cor.y;
 
-            // Výpoèet vzdialenosti v sub-pixelovom priestore plátna
+            // Distance in subpixel of canvas
             if (std::abs(node_sub_x - target_sub_x) <= tolerance &&
                 std::abs(node_sub_y - target_sub_y) <= tolerance) {
-                selected_node = node;
+                this->SetSelectedNode(node);
                 break;
             }
         }
@@ -136,25 +155,32 @@ private:
 
         // Events
         auto graphComponent = CatchEvent(graphContainer, [&](Event event) {
-            if (event.is_mouse()) {
+            if (!event.is_mouse()) {
+                return false;
+            }
+            //else
                 auto mouse = event.mouse();
 
-                // Uchovanie starých súradníc pred aktualizáciou pre presný výpoèet posunu (delta)
+                if (mouse.x >= graph_panel_size) {
+                    return false;
+                }
+
+                // Keep old coord - for movemet calculation
                 int prev_canvas_x = canvas_mouse_x;
                 int prev_canvas_y = canvas_mouse_y;
 
-                canvas_mouse_x = mouse.x - 1; // invert because of diferent origin
+                canvas_mouse_x = mouse.x - 1; // invert because of different origin
                 canvas_mouse_y = mouse.y - 1; //
 
                 // SCROLL - ZOOM:
                 if (mouse.button == Mouse::WheelUp) {
                     _canvas_zoom *= 1.1f;
-                    if (_canvas_zoom > 10.0f) _canvas_zoom = 10.0f; // Bezpeènostný strop
+                    if (_canvas_zoom > 10.0f) _canvas_zoom = 10.0f; // Safe sealing
                     return true;
                 }
                 if (mouse.button == Mouse::WheelDown) {
                     _canvas_zoom /= 1.1f;
-                    if (_canvas_zoom < 0.2f) _canvas_zoom = 0.2f;   // Bezpeènostné dno
+                    if (_canvas_zoom < 0.2f) _canvas_zoom = 0.2f;   // Safe bottom
                     return true;
                 }
 
@@ -176,20 +202,17 @@ private:
                     }
                 }
 
-                // 4. POHYB (ahanie): Aktualizácia offsetov, ak dríme pravé tlaèidlo
+                // MOVEMENT
                 if (mouse.motion == Mouse::Moved && is_dragging) {
                     int delta_x = canvas_mouse_x - prev_canvas_x;
                     int delta_y = canvas_mouse_y - prev_canvas_y;
 
-                    // Priamo meníme premenné, na ktoré ukazujú lambdy v Transformerovi
                     _canvas_pan_x += delta_x;
                     _canvas_pan_y -= delta_y*2;
                     return true;
                 }
 
                 return true;
-            }
-            return false;
             });
         return graphComponent;
     }
@@ -202,6 +225,7 @@ private:
         auto apply_button = Button("  Apply Changes  ", [&] { /*ApplyNodeEdits();*/; });
         auto delete_node_button = Button("  Delete node  ", [&]() {
             fstar->deleteNode(selected_node->id);
+            this->status_msg="Deleted node " + selected_node->name;
             selected_node = nullptr;
         });
 
@@ -213,11 +237,9 @@ private:
             delete_node_button,
         });
 
-
-
         return  Renderer(container, [&, name_input, x_input, y_input, apply_button, delete_node_button] {
             Elements menu_elements;
-            if (selected_node != nullptr) {
+            if (this->selected_node != nullptr) {
                 coor cor = transformer->transform(selected_node);
                 menu_elements.push_back(text(" Edit Node ") | bold | color(Color::Green));
 
@@ -253,6 +275,12 @@ private:
                 menu_elements.push_back(text("Clickt on node to select."));
             }
             //menu_elements.push_back(vfill());
+
+            if (!status_msg.empty()) {
+                    menu_elements.push_back(separator());
+                    menu_elements.push_back(text(status_msg) | color(Color::Yellow));
+                }
+
             menu_elements.push_back(separator());
             menu_elements.push_back(text("[q to exit]") | dim);
 
@@ -343,7 +371,7 @@ public:
 
         this->D = new DistanceMatrix(fstar);
 
-        selected_node = fstar->getNode(1);
+        SetSelectedNode(fstar->getNode(1));
     }
     ~gui() {
         delete transformer;
