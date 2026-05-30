@@ -41,14 +41,16 @@ private:
     int canvas_mouse_x = 0;
     int canvas_mouse_y = 0;
 
-    //for edit
+    //for edit node
     std::string edit_name = "";
     std::string edit_x = "";
     std::string edit_y = "";
 
-    //for add new node
-
-    //for add
+    //Edge edit and delete
+    std::vector<std::string*>  edge_weight_buffers; // one entry per out-edge
+    //std::vector<Component>    edge_row_inputs;     // Input for each weight
+    //std::vector<Component>    edge_row_del_btns;   // "Del" button per edge
+    Component                 edge_section;        // Container::Vertical of rows
 
     // Status feedback
     std::string status_msg = "Status msg";
@@ -100,6 +102,7 @@ private:
         this->edit_x = std::to_string(node->x);
         this->edit_y = std::to_string(node->y);
 
+        RebuildEdgeSection();
     }
 
     void FindClickedNode(int mouse_x, int mouse_y) {
@@ -128,6 +131,61 @@ private:
                 break;
             }
         }
+    }
+
+    void RebuildEdgeSection() {
+        for (string* s : edge_weight_buffers) {
+            delete s;
+        }
+        edge_weight_buffers.clear();
+
+
+        if (!selected_node) {
+            edge_section = Container::Vertical({});
+            return;
+        }
+
+        Components rows;
+        auto end = fstar->end_out_edges(selected_node->id);
+        for (auto it = fstar->begin_out_edges(selected_node->id); it != end; ++it) {
+            fStar::Edge edge = *it;
+            string* input_val = new string( std::to_string( edge.weight ));
+            this->edge_weight_buffers.push_back(input_val);
+
+            auto input = Input(input_val, "w");
+
+            int to_id = edge.to->id;
+            // Capture to_id by value; capture this by reference for fstar access
+            auto del_btn = Button("Delete", [this, to_id, edge] {
+                fstar->deleteEdge(selected_node->id, to_id);
+                status_msg = "Edge to " + edge.to->name + " deleted.";
+                RebuildEdgeSection();
+            });
+
+            auto apply_button = Button( "Apply", [this, to_id, edge, input_val] {
+                // fstar->editWeight(selected_node->id, to_id, std::stoi(input_val) )
+                    status_msg = "Weight from" + edge.to->name + " updeted";
+                    RebuildEdgeSection();
+            });
+
+
+            auto row = ftxui::Renderer(
+            Container::Horizontal({ input, apply_button, del_btn }),
+            [=] {   // capture w_input, del_btn, from, to by value
+                return hbox({
+                    text(edge.from->name + " -[") | vcenter,
+                    input->Render() | size(WIDTH, EQUAL, 9) | vcenter,
+                    text("]-> " + edge.to->name + " ") | vcenter,
+                    filler(),
+                    apply_button->Render()  | vcenter,
+                    del_btn->Render() | color(Color::Red) | vcenter,
+                    });
+                }
+            );
+            rows.push_back(row);
+        }
+
+        edge_section = Container::Vertical(std::move(rows));
     }
 
     Component GraphComponent() {
@@ -230,11 +288,20 @@ private:
             this->status_msg="Deleted node " + name;
         });
 
+        // Proxy component: always delegates render & events to the current
+        // edge_section, which is rebuilt by RebuildEdgeSection() on node change.
+        // This lets the parent container stay fixed while edge components vary.
+        auto edge_proxy = CatchEvent(
+            Renderer([&] { return edge_section->Render(); }),
+            [&](Event e)  { return edge_section->OnEvent(e); }
+        );
+
         auto container = Container::Vertical({
             name_input,
             x_input,
             y_input,
             apply_button,
+            edge_proxy,
             delete_node_button,
         });
 
@@ -261,13 +328,11 @@ private:
 
                 menu_elements.push_back(separator());
 
-                FStarIterator::OutEdgeIterator end = fstar->end_out_edges(selected_node->id);
-                for (FStarIterator::OutEdgeIterator it = fstar->begin_out_edges(selected_node->id); it != end; ++it) {
-                    fStar::Edge edge = *it;
-                    menu_elements.push_back(text( " -[" + std::to_string(edge.weight) + "]-> (" + std::to_string( edge.to->id ) + ") " + edge.to->name ));
-                }
+                menu_elements.push_back(text(" Out Edges ") | bold);
+                menu_elements.push_back(edge_section->Render());
+
                 menu_elements.push_back(
-                  delete_node_button -> Render()
+                  delete_node_button -> Render() | color(Color::Red)
                 );
             }
             else {
@@ -363,6 +428,10 @@ public:
     ~gui() {
         delete transformer;
         delete D; // !!!!
+
+        for (string* s : edge_weight_buffers) {
+            delete s;
+        }
     }
 
     void run() {
