@@ -224,9 +224,10 @@ private:
 
         auto apply_button = Button("  Apply Changes  ", [&] { /*ApplyNodeEdits();*/; });
         auto delete_node_button = Button("  Delete node  ", [&]() {
-            this->status_msg="Deleted node " + selected_node->name;
+            std::string name = selected_node->name;
             fstar->deleteNode(selected_node->id);
             SetSelectedNode(nullptr);
+            this->status_msg="Deleted node " + name;
         });
 
         auto container = Container::Vertical({
@@ -287,20 +288,6 @@ private:
             return vbox(std::move(menu_elements)) | border;
             });
 
-
-        // // Wrap so keyboard events reach the Input children
-        // auto container = Container::Vertical({
-        //     name_input, x_input, y_input,
-        // });
-        //
-        // return CatchEvent(
-        //     Renderer(container, [menu_component, container] {
-        //         return menu_component->Render();
-        //     }),
-        //     [&](Event e) {
-        //         return false; // let children handle keyboard
-        //     }
-        // );
     }
 
     Component MatrixComponent() {

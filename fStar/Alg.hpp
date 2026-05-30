@@ -11,6 +11,13 @@
 #include "fStar.hpp"
 
 using namespace fStar;
+
+class IndexEncoder {
+
+};
+// DO NOT USE,
+// this implementation works correctly only when id is equal to index in matrix
+//  TODO: id to index amd index to it encoding
 class DistanceMatrix {
 private:
     FStar* fstar;
