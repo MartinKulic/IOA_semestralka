@@ -24,10 +24,10 @@ int main() {
         9,7, 9,8
     };
 
-    vector<fStar::Node> nodes = vector<fStar::Node>();
+    Loader l = Loader();
+
     for (int i = 0; i < 9; i++) {
-        fStar::Node n = fStar::Node({float(coordList[i*2]), float(coordList[(i*2)+1]), i, to_string(i+1)});
-        nodes.push_back(n);
+        fStar::Node* n = l.MakeNode(to_string(i+1), float(coordList[i*2]), float(coordList[(i*2)+1]));//fStar::Node({float(coordList[i*2]), float(coordList[(i*2)+1]), i, to_string(i+1)});
     }
 
     FStar fsStar = FStar();
@@ -35,8 +35,8 @@ int main() {
     for (int i = 0; i < 24; i++) {
         int id_node_from = edgesList[i*2]-1;
         int id_node_to = edgesList[(i*2)+1]-1;
-        fStar::Node* node_from = &nodes[id_node_from];
-        fStar::Node* node_to = &nodes[id_node_to];
+        fStar::Node* node_from = l[id_node_from];
+        fStar::Node* node_to = l[id_node_to];
 
         float weight =  sqrt(pow(node_to->x - node_from->x, 2) + pow(node_to->y - node_from->y ,  2));
 
@@ -98,7 +98,8 @@ int main() {
     //t+=Transformer::FlipY(&height);
     //
     //gui g = gui(&fsStar, &t);
-    gui g = gui(&fsStar);
+    Controler c = Controler(&fsStar, &l);
+    gui g = gui(&fsStar, &c);
     g.run();
 
     char ch;

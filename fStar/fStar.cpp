@@ -117,7 +117,25 @@ void FStar::addEdge(Node *from, Node *to, float weight) {
 }
 
 void FStar::deleteEdge(int fromNodeId, int toNodeId, bool oneway) {
-    ;
+    auto mapEntryFrom = this->Edges->find(fromNodeId);
+    if (mapEntryFrom == this->Edges->end()) {
+        return; //node is not in fStar
+    }
+    auto mapEntryTo = this->Edges->find(toNodeId);
+    if (mapEntryTo == this->Edges->end()) {
+        return; //node is not in fStar
+    }
+
+    FStarNodeEdges* nodeEdgesFrom = mapEntryFrom->second;
+    FStarNodeEdges* nodeEdgesTo = mapEntryTo->second;
+    nodeEdgesFrom->deleteEdge(nodeEdgesTo->node_from);
+    numEdges--;
+
+    if (!oneway) {
+        nodeEdgesTo->deleteEdge(nodeEdgesFrom->node_from);
+        numEdges--;
+    }
+
 }
 
 

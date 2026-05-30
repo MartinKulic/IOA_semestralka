@@ -8,7 +8,8 @@
 #include <format>
 #include <math.h>
 
-#include "Transformer.h"
+#include "controler.h"
+#include "Transformer.hpp"
 #include "../fStar/Alg.hpp"
 #include "../fStar/fStar.hpp"
 #include "ftxui/dom/table.hpp"
@@ -20,6 +21,8 @@ using namespace fStar;
 class gui {
 private:
     FStar* fstar;
+    Controler* controler;
+
     Canvas c;
     Transformer* transformer;
     DistanceMatrix* D;
@@ -46,8 +49,13 @@ private:
     std::string edit_x = "";
     std::string edit_y = "";
 
+    Component add_node;
+    std::string add_node_name = "";
+    std::string add_node_x = "";
+    std::string add_node_y = "";
+
     //Edge edit and delete
-    std::vector<std::string*>  edge_weight_buffers; // one entry per out-edge
+    std::deque<std::string*>  edge_weight_buffers; // one entry per out-edge
     //std::vector<Component>    edge_row_inputs;     // Input for each weight
     //std::vector<Component>    edge_row_del_btns;   // "Del" button per edge
     Component                 edge_section;        // Container::Vertical of rows
@@ -164,8 +172,8 @@ private:
 
             auto apply_button = Button( "Apply", [this, to_id, edge, input_val] {
                 // fstar->editWeight(selected_node->id, to_id, std::stoi(input_val) )
-                    status_msg = "Weight from" + edge.to->name + " updeted";
-                    RebuildEdgeSection();
+                status_msg = "Weight from " + edge.to->name + " updeted";
+                RebuildEdgeSection();
             });
 
 
@@ -186,6 +194,34 @@ private:
         }
 
         edge_section = Container::Vertical(std::move(rows));
+    }
+
+    Component AddNodeComponent() {
+        auto name_in = Input(&this->add_node_name, "Name");
+        auto x_in = Input(&this->add_node_x, "X");
+        auto y_in = Input(&this->add_node_y, "Y");
+        auto add_button = Button("Add", [this, name_in, x_in, y_in] {
+            controler->addNode(this->add_node_name, add_node_x, add_node_y);
+        });
+
+        auto container = Container::Vertical({
+            name_in,
+            x_in,
+            y_in,
+            add_button
+        });
+
+        return Renderer(container, [&, container] {
+            Elements elements;
+
+            elements.push_back(hbox(text("Name: "), name_in->Render()));
+            elements.push_back(hbox(text("X: "), x_in->Render()));
+            elements.push_back(hbox(text("Y: "), y_in->Render()));
+            elements.push_back(add_button->Render());
+
+
+            return vbox(elements);
+        });
     }
 
     Component GraphComponent() {
@@ -288,24 +324,27 @@ private:
             this->status_msg="Deleted node " + name;
         });
 
+        auto add_node_section = AddNodeComponent();
+
         // Proxy component: always delegates render & events to the current
         // edge_section, which is rebuilt by RebuildEdgeSection() on node change.
         // This lets the parent container stay fixed while edge components vary.
-        auto edge_proxy = CatchEvent(
-            Renderer([&] { return edge_section->Render(); }),
-            [&](Event e)  { return edge_section->OnEvent(e); }
-        );
+        // auto edge_proxy = CatchEvent(
+        //     Renderer([&] { return edge_section->Render(); }),
+        //     [&](Event e)  { return edge_section->OnEvent(e); }
+        // );
 
         auto container = Container::Vertical({
             name_input,
             x_input,
             y_input,
             apply_button,
-            edge_proxy,
+            edge_section,
+            add_node_section,
             delete_node_button,
         });
 
-        return  Renderer(container, [&, name_input, x_input, y_input, apply_button, delete_node_button] {
+        return  Renderer(container, [&, name_input, x_input, y_input, apply_button, delete_node_button, add_node_section] {
             Elements menu_elements;
             if (this->selected_node != nullptr) {
                 coor cor = transformer->transform(selected_node);
@@ -334,6 +373,9 @@ private:
                 menu_elements.push_back(
                   delete_node_button -> Render() | color(Color::Red)
                 );
+
+                menu_elements.push_back(separator());
+                menu_elements.push_back(AddNodeComponent()->Render());
             }
             else {
                 menu_elements.push_back(text(" MENU ") | bold);
@@ -415,7 +457,7 @@ private:
 
 public:
 
-    gui(FStar* fstar) : fstar(fstar) {
+    gui(FStar* fstar, Controler* controler) : fstar(fstar), controler(controler){
         this->transformer = new Transformer();
         *transformer += Transformer::Scale(&_canvas_zoom);
         *transformer += Transformer::Move(&_canvas_pan_x, &_canvas_pan_y);
