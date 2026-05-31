@@ -200,7 +200,7 @@ private:
         auto name_in = Input(&this->add_node_name, "Name");
         auto x_in = Input(&this->add_node_x, "X");
         auto y_in = Input(&this->add_node_y, "Y");
-        auto add_button = Button("Add", [this, name_in, x_in, y_in] {
+        auto add_button = Button("Add New Node", [this, name_in, x_in, y_in] {
             controler->addNode(this->add_node_name, add_node_x, add_node_y);
         });
 
@@ -211,7 +211,7 @@ private:
             add_button
         });
 
-        return Renderer(container, [&, container] {
+        return Renderer(container, [&, name_in, x_in, y_in, add_button] {
             Elements elements;
 
             elements.push_back(hbox(text("Name: "), name_in->Render()));
@@ -375,7 +375,7 @@ private:
                 );
 
                 menu_elements.push_back(separator());
-                menu_elements.push_back(AddNodeComponent()->Render());
+                menu_elements.push_back(add_node_section->Render());
             }
             else {
                 menu_elements.push_back(text(" MENU ") | bold);
