@@ -14,18 +14,26 @@ class Controler {
     public:
     Controler(fStar::FStar* fstar, Loader* loader): star(fstar), loader(loader) {};
 
-    string addNode(string name, string x, string y) {
+    string addNode(string name, string x, string y, fStar::Node* newNodeToRet) {
         try {
             fStar::Node* node = loader->MakeNode(name, std::stoi(x), std::stoi(y) );
             star->addNode(node);
+            newNodeToRet = node;
         }catch (const std::exception& e) {
             return "Oparation failed\n" + std::string(e.what());
         }
 
-        return "Node " + name + " added successfully";
+        return "Node " + name + " added successfully to x " + x + " y " + y;
     };
-    void deleteNode();
-    void modifyNode();
+    string deleteNode(int nodeToDelId) {
+        this->star->deleteNode(nodeToDelId);
+        return "Node deleted";
+    };
+    void modifyNode(fStar::Node* nodeToMod, string newName, string snewX, string snewY) {
+        float newX = std::stof(snewX);
+        float newY = std::stof(snewY);
+
+    };
 
     void addEdge();
     void deleteEdge();

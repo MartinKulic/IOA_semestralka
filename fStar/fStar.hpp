@@ -14,6 +14,14 @@ namespace fStar {
     struct coor {
         float x;
         float y;
+
+        coor operator+(coor other) const {
+            return coor{x+other.x, y+other.y};
+        }
+
+        coor operator*(int multiplier) const{
+            return coor{x*multiplier, y*multiplier};
+        }
     };
 
     //template <typedef node_id_type>

@@ -31,10 +31,23 @@ public:
     // }
 
     coor transform(fStar::Node* node) {
-        coor newCoord = coor{ node->x, node->y };
+        return transform(coor{node->x,node->y});
+    }
+
+    coor transform(coor cor) {
+        coor newCoord = coor{ cor.x, cor.y };
         for (auto transform : transorms) {
             newCoord = transform(newCoord);
         };
+        return newCoord;
+    }
+
+    coor reverseTransform(coor lodCoord) {
+        coor newCoord = coor{ lodCoord.x, lodCoord.y };
+
+        for (auto it = this->transorms.rbegin(); it != this->transorms.rend(); ++it) {
+            newCoord = (*it)(newCoord);
+        }
         return newCoord;
     }
 
@@ -42,13 +55,23 @@ public:
     static auto Scale(float* scale) {
         return [scale](coor cor) { return coor({ (cor.x * *scale),(cor.y * *scale) }); };
     };
+    static auto rScale(float* scale) {
+        return [scale](coor cor) { return coor({ (cor.x / *scale),(cor.y / *scale) }); };
+    }
+
     static auto Move(float* moveX, float* moveY) {
         return [moveX, moveY](coor cor) { return coor({ (cor.x + *moveX),(cor.y + *moveY) }); };
+    }
+    static auto rMove(float* moveX, float* moveY) {
+        return [moveX, moveY](coor cor) { return coor({ (cor.x - *moveX),(cor.y - *moveY) }); };
     }
     static auto FlipY(float* height) {
         return [height](coor cor) { return coor({ (cor.x),*height - (cor.y) }); };
     }
     static auto FlipY(float height) {
+        return [height](coor cor) { return coor({ (cor.x),height - (cor.y) }); };
+    }
+    static auto rFlipY(float height) {
         return [height](coor cor) { return coor({ (cor.x),height - (cor.y) }); };
     }
 };

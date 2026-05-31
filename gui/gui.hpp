@@ -25,7 +25,10 @@ private:
 
     Canvas c;
     Transformer *transformer;
+    Transformer *rTransformer;
     DistanceMatrix *D;
+
+    const coor graph_text_draw_offset{-4,-6};
 
     float _canvas_zoom = 1.0f;
     float _canvas_pan_x = 10.0f;
@@ -43,6 +46,8 @@ private:
     int last_mouse_y = 0;
     int canvas_mouse_x = 0;
     int canvas_mouse_y = 0;
+    float last_click_node_x = 0.0f;
+    float last_click_node_y = 0.0f;
 
     //for edit node
     std::string edit_name = "";
@@ -68,8 +73,8 @@ private:
             fStar::Node *node = *it;
             coor cor = transformer->transform(node);
 
-            int sub_x = cor.x * 2; // Canvas works with sub pixels
-            int sub_y = cor.y * 2;
+            int sub_x = (cor.x * 2)+graph_text_draw_offset.x; // Canvas works with sub pixels
+            int sub_y = (cor.y * 2)+graph_text_draw_offset.y;
 
             if (selected_node == node) {
                 c.DrawText(sub_x, sub_y, "> " + node->name + " <");
@@ -82,15 +87,15 @@ private:
     void DrawEdges() {
         for (FStarIterator::EdgeIterator it = fstar->begin_edges(); it != fstar->end_edges(); ++it) {
             fStar::Edge edge = *it;
-            coor c1 = transformer->transform(edge.from);
-            coor c2 = transformer->transform(edge.to);
+            coor c1 = transformer->transform(edge.from) * 2 + graph_text_draw_offset;
+            coor c2 = transformer->transform(edge.to) * 2 + graph_text_draw_offset;
 
-            c.DrawPointLine(c1.x * 2, c1.y * 2, c2.x * 2, c2.y * 2); // in sub-pixels
+            c.DrawPointLine(c1.x, c1.y, c2.x, c2.y); // in sub-pixels
 
             //if (c1.x >= c2.x) {
             coor t = coor();
-            t.x = (c1.x + c2.x);
-            t.y = (c1.y + c2.y);
+            t.x = (c1.x + c2.x)/2;
+            t.y = (c1.y + c2.y)/2;
             c.DrawText(t.x, t.y, std::to_string(edge.weight)); // in middle of points - (c1.x + c2.x)/2
             //}
         }
@@ -101,8 +106,8 @@ private:
             return;
         }
         SetSelectedNode(nullptr);
-        int target_sub_x = mouse_x * 2;
-        int target_sub_y = mouse_y * 2;
+        int target_sub_x = mouse_x * 2 - graph_text_draw_offset.x;
+        int target_sub_y = mouse_y * 2 - graph_text_draw_offset.y;
 
         const int tolerance = 4;
 
@@ -197,6 +202,7 @@ private:
             edge_current_rows.push_back(row);
         }
     }
+
     Component EdgeSectionComponent() {
         return Renderer(edge_section, [&] {
             if (this->rebuildEdgeWeightBuffers) {
@@ -211,9 +217,13 @@ private:
         auto name_in = Input(&this->add_node_name, "Name");
         auto x_in = Input(&this->add_node_x, "X");
         auto y_in = Input(&this->add_node_y, "Y");
-        auto add_button = Button("Add New Node", [this, name_in, x_in, y_in] {
-            string s = controler->addNode(this->add_node_name, add_node_x, add_node_y);
+        auto add_button = Button("Add New Node", [this] {
+            fStar::Node* newNode = nullptr;
+            string s = controler->addNode(this->add_node_name, add_node_x, add_node_y, newNode);
             this->status_msg = s;
+
+            this->SetSelectedNode(newNode);
+
         });
 
         auto container = Container::Vertical({
@@ -251,6 +261,8 @@ private:
             std::string status_text = "Zoom: " + std::to_string(_canvas_zoom).substr(0, 4) +
                                       " | PanX: " + std::to_string((int) _canvas_pan_x) +
                                       " | PanY: " + std::to_string((int) _canvas_pan_y) +
+                                      " | ClickMouseX: " + std::to_string(last_click_node_x) +
+                                      " | ClickMouseY: " + std::to_string(last_click_node_y) +
                                       " | MouseX: " + std::to_string(canvas_mouse_x) +
                                       " | MouseY: " + std::to_string(canvas_mouse_y);
 
@@ -295,6 +307,17 @@ private:
             // L CLICK - SELECT
             if (mouse.button == Mouse::Left && mouse.motion == Mouse::Pressed) {
                 FindClickedNode(canvas_mouse_x, canvas_mouse_y);
+
+                //   canvas_x = node_x * zoom + pan_x
+                coor mouseClickCoord = coor{float(mouse.x), float(mouse.y*2)};
+                mouseClickCoord = this->rTransformer->reverseTransform(mouseClickCoord);
+                this->last_click_node_x =  mouseClickCoord.x;
+                this->last_click_node_y = mouseClickCoord.y;
+                // last_click_node_x = (canvas_mouse_x - _canvas_pan_x) / _canvas_zoom;
+                // last_click_node_y = (-canvas_mouse_y*2 - _canvas_pan_y) / _canvas_zoom;
+                this->add_node_x = std::to_string(last_click_node_x);
+                this->add_node_y = std::to_string(last_click_node_y);
+
                 return true;
             }
 
@@ -468,6 +491,10 @@ public:
         *transformer += Transformer::Scale(&_canvas_zoom);
         *transformer += Transformer::Move(&_canvas_pan_x, &_canvas_pan_y);
         *transformer += Transformer::FlipY(0.0);
+        this->rTransformer = new Transformer();
+        *rTransformer += Transformer::rScale(&_canvas_zoom);
+        *rTransformer += Transformer::rMove(&_canvas_pan_x, &_canvas_pan_y);
+        *rTransformer += Transformer::rFlipY(0.0);
 
         this->D = new DistanceMatrix(fstar);
 
@@ -477,6 +504,7 @@ public:
 
     ~gui() {
         delete transformer;
+        delete rTransformer;
         delete D; // !!!!
 
         for (string *s: edge_weight_buffers) {
