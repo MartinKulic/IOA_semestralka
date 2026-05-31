@@ -226,6 +226,8 @@ private:
         return Renderer(container, [&, name_in, x_in, y_in, add_button] {
             Elements elements;
 
+            elements.push_back(text(" Add Node ") | bold | color(Color::Green));
+            elements.push_back(separatorLight());
             elements.push_back(hbox(text("Name: "), name_in->Render()));
             elements.push_back(hbox(text("X: "), x_in->Render()));
             elements.push_back(hbox(text("Y: "), y_in->Render()));
@@ -360,40 +362,35 @@ private:
                 Elements menu_elements;
                 if (this->selected_node != nullptr) {
                     coor cor = transformer->transform(selected_node);
-                    menu_elements.push_back(text(" Edit Node ") | bold | color(Color::Green));
 
-                    menu_elements.push_back(separator());
+                    menu_elements.push_back(vbox(
+                        text(" Edit Node ") | bold | color(Color::Green),
+                        separator(),
+                        hbox({text("Name : "), name_input->Render()}),
+                        hbox({text("Pos X : "), x_input->Render()}),
+                        hbox({text("Pos Y : "), y_input->Render()}),
+                        text("Drawed X: " + std::to_string(cor.x)),
+                        text("Drawed Y: " + std::to_string(cor.y)),
+                        separator(),
+                        hbox(apply_button->Render(), filler(), delete_node_button->Render() | color(Color::Red)),
+                        separatorDouble(),
+                        text(" Out Edges ") | bold | color(Color::Green),
+                        separator(),
+                        edge_section_var->Render()
+                    ) | border);
 
-                    menu_elements.push_back(hbox({text("Name : "), name_input->Render()}));
-                    menu_elements.push_back(hbox({text("Pos X : "), x_input->Render()}));
-                    menu_elements.push_back(hbox({text("Pos Y : "), y_input->Render()}));
-
-                    menu_elements.push_back(text("Drawed X: " + std::to_string(cor.x)));
-                    menu_elements.push_back(text("Drawed Y: " + std::to_string(cor.y)));
-
-                    menu_elements.push_back(separator());
-                    // Apply button
-                    menu_elements.push_back(
-                        apply_button->Render()
-                    );
-
-                    menu_elements.push_back(separator());
-
-                    menu_elements.push_back(text(" Out Edges ") | bold);
-                    menu_elements.push_back(edge_section_var->Render());
-
-                    menu_elements.push_back(
-                        delete_node_button->Render() | color(Color::Red)
-                    );
                 } else {
-                    menu_elements.push_back(text(" MENU ") | bold);
-                    menu_elements.push_back(separator());
-                    menu_elements.push_back(text("Clickt on node to select."));
+                    menu_elements.push_back(
+                        vbox(text(" MENU ") | bold,
+                            separator(),
+                            text("Clickt on node to select.") ) | border
+                    );
+
                 }
                 //menu_elements.push_back(vfill());
 
                 menu_elements.push_back(separator());
-                menu_elements.push_back(add_node_section->Render());
+                menu_elements.push_back(add_node_section->Render() | border);
 
                 if (!status_msg.empty()) {
                     menu_elements.push_back(separator());
@@ -403,7 +400,7 @@ private:
                 menu_elements.push_back(separator());
                 menu_elements.push_back(text("[q to exit]") | dim);
 
-                return vbox(std::move(menu_elements)) | border;
+                return vbox(std::move(menu_elements)  ) ;
             });
     }
 
