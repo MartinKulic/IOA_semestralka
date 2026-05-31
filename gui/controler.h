@@ -14,14 +14,15 @@ class Controler {
     public:
     Controler(fStar::FStar* fstar, Loader* loader): star(fstar), loader(loader) {};
 
-    void addNode(string name, string x, string y) {
+    string addNode(string name, string x, string y) {
         try {
             fStar::Node* node = loader->MakeNode(name, std::stoi(x), std::stoi(y) );
             star->addNode(node);
-        }catch (...) {
-
+        }catch (const std::exception& e) {
+            return "Oparation failed\n" + std::string(e.what());
         }
 
+        return "Node " + name + " added successfully";
     };
     void deleteNode();
     void modifyNode();

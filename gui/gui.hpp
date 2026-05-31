@@ -201,7 +201,8 @@ private:
         auto x_in = Input(&this->add_node_x, "X");
         auto y_in = Input(&this->add_node_y, "Y");
         auto add_button = Button("Add New Node", [this, name_in, x_in, y_in] {
-            controler->addNode(this->add_node_name, add_node_x, add_node_y);
+            string s = controler->addNode(this->add_node_name, add_node_x, add_node_y);
+            this->status_msg = s;
         });
 
         auto container = Container::Vertical({
@@ -374,8 +375,7 @@ private:
                   delete_node_button -> Render() | color(Color::Red)
                 );
 
-                menu_elements.push_back(separator());
-                menu_elements.push_back(add_node_section->Render());
+
             }
             else {
                 menu_elements.push_back(text(" MENU ") | bold);
@@ -383,6 +383,9 @@ private:
                 menu_elements.push_back(text("Clickt on node to select."));
             }
             //menu_elements.push_back(vfill());
+
+            menu_elements.push_back(separator());
+            menu_elements.push_back(add_node_section->Render());
 
             if (!status_msg.empty()) {
                     menu_elements.push_back(separator());
