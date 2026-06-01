@@ -99,6 +99,8 @@ int main() {
     //
     //gui g = gui(&fsStar, &t);
     Controler c = Controler(&fsStar, &l);
+
+
     gui g = gui(&fsStar, &c);
     g.run();
 

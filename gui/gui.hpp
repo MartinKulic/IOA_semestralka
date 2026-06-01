@@ -173,14 +173,14 @@ private:
             int to_id = edge.to->id;
             // Capture to_id by value; capture this by reference for fstar access
             auto del_btn = Button("Delete", [this, to_id, edge] {
-                fstar->deleteEdge(selected_node->id, to_id);
-                status_msg = "Edge to " + edge.to->name + " deleted.";
+                string respond = controler->deleteEdge(edge);
+                status_msg = respond;
                 this->rebuildEdgeWeightBuffers = true;
             });
 
             auto apply_button = Button("Apply", [this, to_id, edge, input_val] {
-                // fstar->editWeight(selected_node->id, to_id, std::stoi(input_val) )
-                status_msg = "Weight from " + edge.to->name + " updeted";
+                string respond = controler->modifyEdge(edge, *input_val);
+                status_msg = respond;
                 this->rebuildEdgeWeightBuffers = true;
             });
 
@@ -353,9 +353,9 @@ private:
         auto x_input = Input(&edit_x, "X coord");
         auto y_input = Input(&edit_y, "Y coord");
 
-        auto apply_button = Button("  Apply Node Changes  ", [&] {
-            /*ApplyNodeEdits();*/
-            ;
+        auto apply_button = Button("  Apply Node Changes  ", [&, this] {
+            string respond = controler->modifyNode( this->selected_node, this->edit_name, this->edit_x, this->edit_y);
+            this->status_msg = respond;
         });
         auto delete_node_button = Button("  Delete node  ", [&]() {
             std::string name = selected_node->name;
@@ -367,6 +367,13 @@ private:
         //auto edge_section = EdgeSection();
         auto add_node_section = AddNodeComponent();
         auto edge_section_var = EdgeSectionComponent();
+
+   //      auto node_edit_container = Container::Vertical({
+   //          name_input, x_input, y_input,
+   //          apply_button, edge_section_var, delete_node_button,
+   // });
+   //      auto node_edit_maybe = Maybe(node_edit_container,
+   //                                   [&]{ return selected_node != nullptr; });
 
         auto container = Container::Vertical({
             name_input,

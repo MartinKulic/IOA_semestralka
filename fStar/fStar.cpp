@@ -138,6 +138,29 @@ void FStar::deleteEdge(int fromNodeId, int toNodeId, bool oneway) {
 
 }
 
+void FStar::modifieEdge(int from, int to, float newWeight, bool oneway) {
+    auto mapEntryFrom = this->Edges->find(from);
+    if (mapEntryFrom == this->Edges->end()) {
+        return; //node is not in fStar
+    }
+    FStarNodeEdges* fromEntry = mapEntryFrom->second;
+    FStarEdgeEntry* edgeEntryToMod = nullptr;
+     for (FStarEdgeEntry& edge: *fromEntry->_edges) {
+        if (edge.node_to->id == to) {
+            edgeEntryToMod = &edge;
+            break;
+        }
+     }
+    if (edgeEntryToMod == nullptr) {
+        return; //node is not found
+    }
+    (edgeEntryToMod->weight) = newWeight;
+
+    if (!oneway) {
+        this->modifieEdge(to, from, newWeight, true);
+    }
+}
+
 
 FStar::~FStar() {
     for (auto const& rec: *Edges) {

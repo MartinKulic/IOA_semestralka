@@ -27,17 +27,44 @@ class Controler {
     };
     string deleteNode(int nodeToDelId) {
         this->star->deleteNode(nodeToDelId);
+        loader->DestroyNode(nodeToDelId);
         return "Node deleted";
     };
-    void modifyNode(fStar::Node* nodeToMod, string newName, string snewX, string snewY) {
-        float newX = std::stof(snewX);
-        float newY = std::stof(snewY);
+    string modifyNode(fStar::Node* nodeToMod, string newName, string snewX, string snewY) {
+        float newX,newY;
+        try {
+             newX = std::stof(snewX);
+        }catch (...) {
+            return "Error while parsing " + snewX;
+        }
+        try {
+            newY = std::stof(snewY);
+        }catch (...) {
+            return "Error while parsing " + snewY;
+        }
 
+        nodeToMod->name=newName;
+        nodeToMod->x=newX;
+        nodeToMod->y=newY;
     };
 
     void addEdge();
-    void deleteEdge();
-    void modifyEdge();
+    string deleteEdge(fStar::Edge edgeToDel) {
+        star->deleteEdge(edgeToDel.from->id, edgeToDel.to->id);
+        return"Edge to " + edgeToDel.to->name + " deleted.";
+    };
+    string modifyEdge(fStar::Edge edge, string newWeoght) {
+        float newWeight;
+        try {
+            newWeight = std::stof(newWeoght);
+        }catch (...) {
+            return "Error while parsing " + newWeoght;
+        }
+
+        star->modifieEdge(edge.from->id, edge.to->id, newWeight);
+
+        return "New Edge w " + newWeoght + " modified.";
+    };
 
     fStar::FStar getFStar();
 };
