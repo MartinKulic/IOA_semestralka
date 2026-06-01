@@ -26,7 +26,7 @@ private:
     Canvas c;
     Transformer *transformer;
     Transformer *rTransformer;
-    DistanceMatrix *D;
+
 
     const coor graph_text_draw_offset{-4,-6};
 
@@ -39,6 +39,7 @@ private:
 
     // Tab state: 0 = Graph, 1 = Distance Matrix
     int active_tab = 0;
+    int active_node_tab = 0;
 
     fStar::Node *selected_node = nullptr;
     // for pan
@@ -55,7 +56,7 @@ private:
     std::string edit_y = "";
 
     Component add_node;
-    std::string add_node_name = "";
+    std::string add_node_name = "Name";
     std::string add_node_x = "";
     std::string add_node_y = "";
 
@@ -107,7 +108,7 @@ private:
         }
         SetSelectedNode(nullptr);
         int target_sub_x = mouse_x * 2 - graph_text_draw_offset.x;
-        int target_sub_y = mouse_y * 2 - graph_text_draw_offset.y;
+        int target_sub_y = mouse_y * 2 - graph_text_draw_offset.y-5;
 
         const int tolerance = 4;
 
@@ -217,9 +218,9 @@ private:
         auto name_in = Input(&this->add_node_name, "Name");
         auto x_in = Input(&this->add_node_x, "X");
         auto y_in = Input(&this->add_node_y, "Y");
-        auto add_button = Button("Add New Node", [this] {
+        auto add_button = Button("Add New Node", [&,this] {
             fStar::Node* newNode = nullptr;
-            string s = controler->addNode(this->add_node_name, add_node_x, add_node_y, newNode);
+            string s = controler->addNode(this->add_node_name, add_node_x, add_node_y, &newNode);
             this->status_msg = s;
 
             this->SetSelectedNode(newNode);
@@ -246,6 +247,57 @@ private:
 
             return vbox(elements);
         });
+    }
+
+    Component NodeInfoComponent() {
+        auto name_input = Input(&edit_name, "node name");
+        auto x_input = Input(&edit_x, "X coord");
+        auto y_input = Input(&edit_y, "Y coord");
+
+        auto apply_button = Button("  Apply Node Changes  ", [&, this] {
+            string respond = controler->modifyNode( this->selected_node, this->edit_name, this->edit_x, this->edit_y);
+            this->status_msg = respond;
+        });
+        auto delete_node_button = Button("  Delete node  ", [&]() {
+            std::string name = selected_node->name;
+            fstar->deleteNode(selected_node->id);
+            SetSelectedNode(nullptr);
+            this->status_msg = "Deleted node " + name;
+        });
+
+        auto edge_section_var = EdgeSectionComponent();
+
+        auto container = Container::Vertical({
+           name_input,
+            x_input,
+            y_input,
+            apply_button,
+            delete_node_button,
+            edge_section_var
+       });
+
+        return Renderer(container,
+            [&, name_input, x_input, y_input, apply_button, delete_node_button] {
+                Elements menu_elements;
+                coor cor = transformer->transform(selected_node);
+
+                menu_elements.push_back( text(" Edit Node ") | bold | color(Color::Green));
+                menu_elements.push_back( separator());
+                menu_elements.push_back( hbox({text("Name : "), name_input->Render()}));
+                menu_elements.push_back( hbox({text("Pos X : "), x_input->Render()}));
+                menu_elements.push_back( hbox({text("Pos Y : "), y_input->Render()}));
+                menu_elements.push_back( text("Drawed X: " + std::to_string(cor.x)));
+                menu_elements.push_back( text("Drawed Y: " + std::to_string(cor.y)));
+                menu_elements.push_back( separator());
+                menu_elements.push_back( hbox(apply_button->Render(), filler(), delete_node_button->Render() | color(Color::Red)));
+                menu_elements.push_back( separatorDouble());
+                menu_elements.push_back( text(" Out Edges ") | bold | color(Color::Green));
+                menu_elements.push_back( separator());
+                menu_elements.push_back( edge_section_var->Render());
+
+                return vbox(menu_elements) | border;
+            });
+
     }
 
     Component GraphComponent() {
@@ -275,6 +327,7 @@ private:
 
         // Events
         auto graphComponent = CatchEvent(graphContainer, [&](Event event) {
+
             if (!event.is_mouse()) {
                 return false;
             }
@@ -318,7 +371,7 @@ private:
                 this->add_node_x = std::to_string(last_click_node_x);
                 this->add_node_y = std::to_string(last_click_node_y);
 
-                return true;
+                return selected_node!=nullptr;
             }
 
             // R CLICK
@@ -343,95 +396,52 @@ private:
                 return true;
             }
 
-            return true;
+            return false;
         });
         return graphComponent;
     }
 
     Component MenuComponent() {
-        auto name_input = Input(&edit_name, "node name");
-        auto x_input = Input(&edit_x, "X coord");
-        auto y_input = Input(&edit_y, "Y coord");
-
-        auto apply_button = Button("  Apply Node Changes  ", [&, this] {
-            string respond = controler->modifyNode( this->selected_node, this->edit_name, this->edit_x, this->edit_y);
-            this->status_msg = respond;
-        });
-        auto delete_node_button = Button("  Delete node  ", [&]() {
-            std::string name = selected_node->name;
-            fstar->deleteNode(selected_node->id);
-            SetSelectedNode(nullptr);
-            this->status_msg = "Deleted node " + name;
-        });
-
-        //auto edge_section = EdgeSection();
+        auto node_info_section = NodeInfoComponent();
         auto add_node_section = AddNodeComponent();
-        auto edge_section_var = EdgeSectionComponent();
 
-   //      auto node_edit_container = Container::Vertical({
-   //          name_input, x_input, y_input,
-   //          apply_button, edge_section_var, delete_node_button,
-   // });
-   //      auto node_edit_maybe = Maybe(node_edit_container,
-   //                                   [&]{ return selected_node != nullptr; });
+        // node_info_section switches between tabs - add_node_section is ALWAYS active separately
+        auto info_tab = Container::Tab(
+            {
+                Renderer([] { // Tab 0: no selection - just a dummy non-interactive renderer
+                    return vbox(text(" MENU ") | bold,
+                                separator(),
+                                text("Click on node to select.")) | border;
+                }),
+                node_info_section,  // Tab 1: node selected
+            },
+            &active_node_tab
+        );
 
+        // Top level container - info_tab and add_node_section are siblings, never duplicated
         auto container = Container::Vertical({
-            name_input,
-            x_input,
-            y_input,
-            apply_button,
-            edge_section_var,
+            info_tab,
             add_node_section,
-            delete_node_button,
         });
 
-        return Renderer(
-            container,
-            [&, name_input, x_input, y_input, apply_button, delete_node_button, add_node_section, edge_section_var] {
-                //edge_section] {
-                Elements menu_elements;
-                if (this->selected_node != nullptr) {
-                    coor cor = transformer->transform(selected_node);
+        return Renderer(container, [&, info_tab, add_node_section] {
+            active_node_tab = (selected_node != nullptr) ? 1 : 0;
 
-                    menu_elements.push_back(vbox(
-                        text(" Edit Node ") | bold | color(Color::Green),
-                        separator(),
-                        hbox({text("Name : "), name_input->Render()}),
-                        hbox({text("Pos X : "), x_input->Render()}),
-                        hbox({text("Pos Y : "), y_input->Render()}),
-                        text("Drawed X: " + std::to_string(cor.x)),
-                        text("Drawed Y: " + std::to_string(cor.y)),
-                        separator(),
-                        hbox(apply_button->Render(), filler(), delete_node_button->Render() | color(Color::Red)),
-                        separatorDouble(),
-                        text(" Out Edges ") | bold | color(Color::Green),
-                        separator(),
-                        edge_section_var->Render()
-                    ) | border);
+            Elements menu_elements;
+            menu_elements.push_back(info_tab->Render());
+            menu_elements.push_back(separator());
+            menu_elements.push_back(add_node_section->Render() | border);
 
-                } else {
-                    menu_elements.push_back(
-                        vbox(text(" MENU ") | bold,
-                            separator(),
-                            text("Clickt on node to select.") ) | border
-                    );
-
-                }
-                //menu_elements.push_back(vfill());
-
+            if (!status_msg.empty()) {
                 menu_elements.push_back(separator());
-                menu_elements.push_back(add_node_section->Render() | border);
+                menu_elements.push_back(text(status_msg) | color(Color::Yellow));
+            }
 
-                if (!status_msg.empty()) {
-                    menu_elements.push_back(separator());
-                    menu_elements.push_back(text(status_msg) | color(Color::Yellow));
-                }
+            menu_elements.push_back(separator());
+            menu_elements.push_back(text("[q to exit]") | dim);
 
-                menu_elements.push_back(separator());
-                menu_elements.push_back(text("[q to exit]") | dim);
-
-                return vbox(std::move(menu_elements)  ) ;
-            });
+            return vbox(std::move(menu_elements));
+        });
     }
 
     Component MatrixComponent() {
@@ -440,7 +450,7 @@ private:
             rows.push_back(text(" Distance Matrix ") | bold | color(Color::Cyan));
             rows.push_back(separator());
 
-            if (!D) {
+            if (!controler->D()) {
                 rows.push_back(text("No matrix available."));
                 return vbox(std::move(rows)) | border;
             }
@@ -463,7 +473,7 @@ private:
                 vector<string> row = vector<string>();
                 row.push_back((*it)->name);
                 for (fStar::FStarIterator::NodeIterator it2 = fstar->begin_nodes(); it2 != end; ++it2) {
-                    const float curWeigt = (*D)[(*it)->id][(*it2)->id];
+                    const float curWeigt = (*controler->D())[(*it)->id][(*it2)->id];
                     row.push_back(std::to_string(curWeigt));
                 }
                 tableData.push_back(row);
@@ -503,8 +513,6 @@ public:
         *rTransformer += Transformer::rMove(&_canvas_pan_x, &_canvas_pan_y);
         *rTransformer += Transformer::rFlipY(0.0);
 
-        this->D = new DistanceMatrix(fstar);
-
         SetSelectedNode(fstar->getNode(1));
         this->edge_section = Container::Vertical({});
     }
@@ -512,7 +520,6 @@ public:
     ~gui() {
         delete transformer;
         delete rTransformer;
-        delete D; // !!!!
 
         for (string *s: edge_weight_buffers) {
             delete s;
@@ -557,19 +564,20 @@ public:
         );
 
 
-        auto main_component = CatchEvent(full_view, [&](Event event) {
-            if (event == Event::Character('q')) {
-                screen.ExitLoopClosure()();
-                return true;
-            }
-            // 'r' shortcut to recalculate matrix from anywhere
-            if (event == Event::Character('r')) {
-                //RebuildDistanceMatrix();
-                return true;
-            }
-            return false;
-        });
+        // auto main_component = CatchEvent(full_view, [&](Event event) {
+        //     if (event == Event::Character('q')) {
+        //         screen.ExitLoopClosure()();
+        //         return true;
+        //     }
+        //     // 'r' shortcut to recalculate matrix from anywhere
+        //     if (event == Event::Character('r')) {
+        //         //RebuildDistanceMatrix();
+        //         return true;
+        //     }
+        //     return false;
+        // });
 
-        screen.Loop(main_component);
+        //screen.Loop(main_component);
+        screen.Loop(full_view);
     }
 };
