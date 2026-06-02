@@ -1,14 +1,8 @@
 //
-// Created by ja on 31/05/2026.
+// Created by ja on 03/06/2026.
 //
 
 #include "Loader.hpp"
 
-#include <filesystem>
-
-void Loader::save(filesystem::path path) {
-
-}
-
-void Loader::load(std::string path) {
+void Loader::save(std::filesystem::path path) {
 }

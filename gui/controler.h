@@ -5,17 +5,17 @@
 #ifndef IOA_SEMESTRALKA_CONTROLER_H
 #define IOA_SEMESTRALKA_CONTROLER_H
 #include "../fStar/fStar.hpp"
-#include  "../fStar/Loader.hpp"
+#include  "../fStar/NodeAllocator.hpp"
 #include "../fStar/Alg.hpp"
 
 class Controler {
     private:
     fStar::FStar* star;
-    Loader* loader;
+    NodeAllocator* loader;
     DistanceMatrix* distancaMatrix;
 
     public:
-    Controler(fStar::FStar* fstar, Loader* loader): star(fstar), loader(loader) {
+    Controler(fStar::FStar* fstar, NodeAllocator* loader): star(fstar), loader(loader) {
         this->distancaMatrix = new DistanceMatrix(fstar);
     };
     ~Controler() {

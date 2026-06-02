@@ -24,7 +24,7 @@ int main() {
         9,7, 9,8
     };
 
-    Loader l = Loader();
+    NodeAllocator l = NodeAllocator();
 
     for (int i = 0; i < 9; i++) {
         fStar::Node* n = l.MakeNode(to_string(i+1), float(coordList[i*2]), float(coordList[(i*2)+1]));//fStar::Node({float(coordList[i*2]), float(coordList[(i*2)+1]), i, to_string(i+1)});

@@ -16,9 +16,11 @@ add_executable(IOA_semestralka
         fStar/Alg.hpp
         gui/Transformer.cpp
         gui/Transformer.hpp
+        fStar/NodeAllocator.cpp
+        fStar/NodeAllocator.hpp
+        gui/controler.h
         fStar/Loader.cpp
-        fStar/Loader.hpp
-        gui/controler.h)
+        fStar/Loader.hpp)
 
 #add_executable(main main.cpp)
 target_link_libraries(IOA_semestralka
