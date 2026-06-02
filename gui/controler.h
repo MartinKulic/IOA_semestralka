@@ -108,6 +108,35 @@ class Controler {
         return "New Edge w " + newWeoght + " modified.";
     };
 
+    float calculateEuclideanDistance(fStar::Node* from, fStar::Node* to) {
+        if (!from || !to) {
+            return -1.f;
+        }
+        return sqrtf(pow(to->x - from->x,2)+pow(to->y - from->y, 2));
+    }
+    string calculateEuclideanDistance(fStar::Node* from, fStar::Node* to, string* dest) {
+        if (!from || !to) {
+            return "Edge point are not defined";
+        }
+        *dest = std::to_string(calculateEuclideanDistance(from, to));
+        return "Value calculated";
+    }
+
+    string recalculateAllDistances() {
+        auto endEdgeIt = star->end_edges();
+        for (auto edgeIt = star->begin_edges(); edgeIt != endEdgeIt; ++edgeIt) {
+            fStar::Edge edge = *edgeIt;
+
+            fStar::Node* from = edge.from;
+            fStar::Node* to = edge.to;
+
+            float newWeight = calculateEuclideanDistance(from, to);
+            star->modifieEdge(from->id, to->id, newWeight, true);
+        }
+
+        return "Recalculate all distances";
+    }
+
     fStar::FStar* getFStar() {
         return this->star;
     };

@@ -85,7 +85,7 @@ private:
             int sub_y = (cor.y * 2)+graph_text_draw_offset.y;
 
             if (selected_node == node) {
-                c.DrawText(sub_x, sub_y, "< " + node->name + " >");
+                c.DrawText(sub_x, sub_y, "< " + node->name + " >", Color::Green);
             }else if (node_edge_to == node) {
                 c.DrawText(sub_x, sub_y, "> " + node->name + " <");
             }
@@ -228,15 +228,19 @@ private:
             this->is_select_node_to_mode = false;
         });
         auto select_node_to_checkbox = Checkbox("Select node to", &this->is_select_node_to_mode);
+        auto calculate_weight_button = Button("Calculate weight", [&, this] {
+            status_msg = controler->calculateEuclideanDistance(selected_node, node_edge_to, &add_edge_weight);
+        });
 
         auto container = Container::Vertical({
             edge_section,
             in_weight,
             add_edge_button,
-            select_node_to_checkbox
+            select_node_to_checkbox,
+            calculate_weight_button
         });
 
-        return Renderer(container, [&, this, in_weight, add_edge_button,select_node_to_checkbox] {
+        return Renderer(container, [&, this, in_weight, add_edge_button,select_node_to_checkbox, calculate_weight_button] {
             Elements elements;
             if (this->rebuildEdgeWeightBuffers) {
                 rebuildEdgeWeightBuffers  = false;
@@ -251,8 +255,12 @@ private:
                 in_weight->Render() | size(WIDTH, EQUAL, 9) | vcenter,
                 text("]-> " + (node_edge_to ? node_edge_to->name : "select node to")) | vcenter,
                 filler(),
-                select_node_to_checkbox->Render() | vcenter,
                 add_edge_button->Render() | vcenter | color(Color::BlueLight)
+            ));
+            elements.push_back(hbox(
+                calculate_weight_button->Render()| vcenter,
+                filler(),
+                select_node_to_checkbox->Render() | vcenter
             ));
 
             return vbox(elements);
@@ -347,6 +355,30 @@ private:
             });
 
     }
+
+    Component DangerOperationsComponent() {
+        auto recalculate_distances_button = Button("Recalculate All Distances", [&, this] {
+            this->SetSelectedNode(nullptr);
+            this->node_edge_to = nullptr;
+
+            status_msg = controler->recalculateAllDistances();
+        });
+
+        auto colab = Collapsible("Danger", recalculate_distances_button | color(Color::Orange1) );
+
+        auto container = Container::Vertical({
+            colab,
+        });
+
+        return Renderer(container, [&, colab] {
+            Elements elements;
+
+            elements.push_back(colab->Render());
+
+            return vbox(elements) | border;
+
+        });
+    };
 
     Component GraphComponent() {
         auto graphContainer = Renderer([&] {
@@ -478,13 +510,16 @@ private:
             &active_node_tab
         );
 
+        auto danger_operation_section = DangerOperationsComponent();
+
         // Top level container - info_tab and add_node_section are siblings, never duplicated
         auto container = Container::Vertical({
             info_tab,
             add_node_section,
+            danger_operation_section
         });
 
-        return Renderer(container, [&, info_tab, add_node_section] {
+        return Renderer(container, [&, info_tab, add_node_section, danger_operation_section] {
             active_node_tab = (selected_node != nullptr) ? 1 : 0;
 
             Elements menu_elements;
@@ -496,6 +531,9 @@ private:
                 menu_elements.push_back(separator());
                 menu_elements.push_back(text(status_msg) | color(Color::Yellow));
             }
+
+            menu_elements.push_back(separator());
+            menu_elements.push_back(danger_operation_section->Render());
 
             menu_elements.push_back(separator());
             menu_elements.push_back(text("[Home] to exit ToMode") | dim);
