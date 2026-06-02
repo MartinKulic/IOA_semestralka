@@ -49,6 +49,7 @@ private:
     int canvas_mouse_y = 0;
     float last_click_node_x = 0.0f;
     float last_click_node_y = 0.0f;
+    bool draw_last_click = true;
 
     //for edit node
     std::string edit_name = "";
@@ -68,6 +69,8 @@ private:
     std::string add_edge_weight = "10";
     fStar::Node* node_edge_to = nullptr;
     bool is_select_node_to_mode = false;
+    // bool is_select_node_to_mode_key_pressed = false;
+    // bool is_select_node_to_mode_key_lastState = false;
 
 
     // Status feedback
@@ -90,6 +93,7 @@ private:
                 c.DrawText(sub_x, sub_y, node->name);
             }
         }
+
     }
 
     void DrawEdges() {
@@ -107,6 +111,7 @@ private:
             c.DrawText(t.x, t.y, std::to_string(edge.weight)); // in middle of points - (c1.x + c2.x)/2
             //}
         }
+
     }
 
     fStar::Node* FindClickedNode(int mouse_x, int mouse_y) {
@@ -219,6 +224,7 @@ private:
             string respond = controler->addEdge(selected_node, node_edge_to,add_edge_weight);
             this->status_msg = respond;
             this->rebuildEdgeWeightBuffers = true;
+            this->node_edge_to=nullptr;
             this->is_select_node_to_mode = false;
         });
         auto select_node_to_checkbox = Checkbox("Select node to", &this->is_select_node_to_mode);
@@ -265,15 +271,17 @@ private:
             this->SetSelectedNode(newNode);
 
         });
+        auto preview_location = Checkbox("Preview location", &this->draw_last_click);
 
         auto container = Container::Vertical({
             name_in,
             x_in,
             y_in,
-            add_button
+            add_button,
+            preview_location
         });
 
-        return Renderer(container, [&, name_in, x_in, y_in, add_button] {
+        return Renderer(container, [&, name_in, x_in, y_in, add_button, preview_location] {
             Elements elements;
 
             elements.push_back(text(" Add Node ") | bold | color(Color::Green));
@@ -281,6 +289,7 @@ private:
             elements.push_back(hbox(text("Name: "), name_in->Render()));
             elements.push_back(hbox(text("X: "), x_in->Render()));
             elements.push_back(hbox(text("Y: "), y_in->Render()));
+            elements.push_back(preview_location->Render());
             elements.push_back(add_button->Render() | color(Color::BlueLight));
 
 
@@ -348,6 +357,12 @@ private:
             c = Canvas(dynamic_w, dynamic_h);
             DrawEdges();
             DrawNodes();
+            if (draw_last_click && !selected_node) {
+            coor cor = coor{last_click_node_x, last_click_node_y};
+            cor = this->transformer->transform(cor);
+            cor = cor*2+graph_text_draw_offset;
+            c.DrawText(cor.x, cor.y, "x");
+        }
 
             std::string status_text = "Zoom: " + std::to_string(_canvas_zoom).substr(0, 4) +
                                       " | PanX: " + std::to_string((int) _canvas_pan_x) +
@@ -412,8 +427,7 @@ private:
                 mouseClickCoord = this->rTransformer->reverseTransform(mouseClickCoord);
                 this->last_click_node_x =  mouseClickCoord.x;
                 this->last_click_node_y = mouseClickCoord.y;
-                // last_click_node_x = (canvas_mouse_x - _canvas_pan_x) / _canvas_zoom;
-                // last_click_node_y = (-canvas_mouse_y*2 - _canvas_pan_y) / _canvas_zoom;
+
                 this->add_node_x = std::to_string(last_click_node_x);
                 this->add_node_y = std::to_string(last_click_node_y);
 
@@ -485,7 +499,7 @@ private:
 
             menu_elements.push_back(separator());
             menu_elements.push_back(text("[Home] to exit ToMode") | dim);
-            menu_elements.push_back(text("or hold [Alt+S] to engage ToMode") | dim);
+            menu_elements.push_back(text("[Alt+S] to toggle ToMode") | dim);
 
             return vbox(std::move(menu_elements));
         });
@@ -608,19 +622,27 @@ public:
             left_renderer,
             menu_component,
             &graph_panel_size
-        );
+        ) | (is_select_node_to_mode ? color(Color::Red) : color(Color::Default));
 
 
         auto main_component = CatchEvent(full_view, [&](Event event) {
-            bool alt_S_pressed = false;
+
+            // this->is_select_node_to_mode_key_pressed = event==Event::AltS;
+            // if (this->is_select_node_to_mode_key_pressed != this->is_select_node_to_mode_key_lastState) {
+            //     this->is_select_node_to_mode=this->is_select_node_to_mode_key_pressed;
+            //
+            //     this->is_select_node_to_mode_key_lastState = this->is_select_node_to_mode_key_pressed;
+            // }
+            if (event == Event::AltS) {
+                this->is_select_node_to_mode = !this->is_select_node_to_mode;
+                return true;
+            }
 
             if (event==Event::Home) {
                 this->is_select_node_to_mode = false;
                 return true;
             }
-            if (event == Event::AltS) {
-                alt_S_pressed = true;
-            }
+
 
             // if (event == Event::Character('q')) {
             //     screen.ExitLoopClosure()();
