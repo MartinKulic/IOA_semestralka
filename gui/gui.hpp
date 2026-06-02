@@ -277,7 +277,7 @@ private:
        });
 
         return Renderer(container,
-            [&, name_input, x_input, y_input, apply_button, delete_node_button] {
+            [&, name_input, x_input, y_input, apply_button, delete_node_button, edge_section_var] {
                 Elements menu_elements;
                 coor cor = transformer->transform(selected_node);
 
@@ -293,7 +293,7 @@ private:
                 menu_elements.push_back( separatorDouble());
                 menu_elements.push_back( text(" Out Edges ") | bold | color(Color::Green));
                 menu_elements.push_back( separator());
-                menu_elements.push_back( EdgeSectionComponent()->Render());
+                menu_elements.push_back( edge_section_var->Render());
 
                 return vbox(menu_elements) | border;
             });
