@@ -40,7 +40,7 @@ int main() {
 
         float weight =  sqrt(pow(node_to->x - node_from->x, 2) + pow(node_to->y - node_from->y ,  2));
 
-        fsStar.addEdge(node_from, node_to, weight);
+        fsStar.addEdge(node_from, node_to, weight, true);
     }
 
 

@@ -75,7 +75,22 @@ class Controler {
         return "Sucsessfull updated node " + nodeToMod->name;
     };
 
-    void addEdge();
+    string addEdge(fStar::Node* from, fStar::Node* to, string sWeight) {
+        if (!to || !from) {
+            return "Edge points are not defined";
+        }
+
+        float weight;
+        try {
+            weight = std::stof(sWeight);
+        }catch (...) {
+            return "Error while parsing weight " + sWeight;
+        }
+
+        star->addEdge(from, to, weight);
+
+        return "OK";
+    };
     string deleteEdge(fStar::Edge edgeToDel) {
         star->deleteEdge(edgeToDel.from->id, edgeToDel.to->id);
         return"Edge to " + edgeToDel.to->name + " deleted.";

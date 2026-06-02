@@ -176,7 +176,7 @@ namespace fStar {
         FStar();
 
         void addNode(Node* node);
-        void addEdge(Node* from, Node* to, float weight);
+        void addEdge(Node* from, Node* to, float weight, bool oneway=false);
         void deleteNode(int nodeId);
         void deleteEdge(int fromNodeId, int toNodeId, bool oneway=false);
         void modifieEdge(int from, int to, float newWeight, bool oneway=false);

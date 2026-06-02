@@ -89,7 +89,7 @@ void FStar::deleteNode(int nodeFrom) {
     //delete nodeToDelete;
 }
 
-void FStar::addEdge(Node *from, Node *to, float weight) {
+void FStar::addEdge(Node *from, Node *to, float weight, bool oneway) {
     FStarNodeEdges* _fsr_nodeFromEdges = this->_findNodeEdges_encap(from);
     if (_fsr_nodeFromEdges == nullptr) {
         //Node does not exist jet
@@ -114,6 +114,9 @@ void FStar::addEdge(Node *from, Node *to, float weight) {
 
     _fsr_nodeFromEdges->_edges->push_back(edge);
     this->numEdges++;
+    if (!oneway) {
+        this->addEdge(to,from,weight, true);
+    }
 }
 
 void FStar::deleteEdge(int fromNodeId, int toNodeId, bool oneway) {
