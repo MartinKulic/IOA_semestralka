@@ -72,6 +72,8 @@ private:
     // bool is_select_node_to_mode_key_pressed = false;
     // bool is_select_node_to_mode_key_lastState = false;
 
+    std::string path_load_from = "../save.txt";
+    std::string path_save_to = "../save.txt";
 
     // Status feedback
     std::string status_msg = "Status msg";
@@ -375,10 +377,49 @@ private:
 
             elements.push_back(colab->Render());
 
-            return vbox(elements) | border;
+            return vbox(elements) | border | color(Color::Red);
 
         });
     };
+    Component LoadSaveComponent() {
+        auto in_path_load_from = Input(&this->path_load_from, "path where to load");
+        auto load_button = Button("Load", [&, this] {
+            status_msg = controler->load(this->path_load_from);
+        });
+
+        auto in_path_save_from = Input(&this->path_save_to, "path where to save");
+        auto save_button = Button("Save", [&, this] {
+            status_msg = controler->save(this->path_save_to);
+        });
+
+        auto container = Container::Vertical({
+            in_path_load_from,
+            in_path_save_from,
+            save_button,
+            load_button
+        });
+
+        auto calabs = Collapsible("Load Save", Renderer(container, [&, in_path_load_from, in_path_save_from, load_button, save_button] {
+            Elements elements;
+
+            elements.push_back(hbox(
+                in_path_load_from -> Render(),
+                filler(),
+                load_button->Render() | color(Color::Orange3)
+            ));
+            elements.push_back(hbox(
+                in_path_save_from -> Render(),
+                filler(),
+                save_button->Render() | color(Color::GreenLight)
+            ));
+
+            return vbox(elements) | color(Color::Default) ;
+        })) | color(Color::Green);
+
+
+
+        return calabs | borderDashed | color(Color::CyanLight);
+    }
 
     Component GraphComponent() {
         auto graphContainer = Renderer([&] {
@@ -496,6 +537,7 @@ private:
     Component MenuComponent() {
         auto node_info_section = NodeInfoComponent();
         auto add_node_section = AddNodeComponent();
+        auto load_save_section = LoadSaveComponent();
 
         // node_info_section switches between tabs - add_node_section is ALWAYS active separately
         auto info_tab = Container::Tab(
@@ -516,10 +558,11 @@ private:
         auto container = Container::Vertical({
             info_tab,
             add_node_section,
-            danger_operation_section
+            danger_operation_section,
+            load_save_section
         });
 
-        return Renderer(container, [&, info_tab, add_node_section, danger_operation_section] {
+        return Renderer(container, [&, info_tab, add_node_section, danger_operation_section, load_save_section] {
             active_node_tab = (selected_node != nullptr) ? 1 : 0;
 
             Elements menu_elements;
@@ -527,14 +570,17 @@ private:
             menu_elements.push_back(separator());
             menu_elements.push_back(add_node_section->Render() | border);
 
-            if (!status_msg.empty()) {
-                menu_elements.push_back(separator());
-                menu_elements.push_back(text(status_msg) | color(Color::Yellow));
-            }
 
             menu_elements.push_back(separator());
             menu_elements.push_back(danger_operation_section->Render());
 
+            menu_elements.push_back(separator());
+            menu_elements.push_back(load_save_section->Render());
+
+            if (!status_msg.empty()) {
+                menu_elements.push_back(separator());
+                menu_elements.push_back(text(status_msg) | color(Color::Yellow));
+            }
             menu_elements.push_back(separator());
             menu_elements.push_back(text("[Home] to exit ToMode") | dim);
             menu_elements.push_back(text("[Alt+S] to toggle ToMode") | dim);

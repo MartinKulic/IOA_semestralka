@@ -5,6 +5,9 @@
 #ifndef IOA_SEMESTRALKA_LOADER_H
 #define IOA_SEMESTRALKA_LOADER_H
 
+// TODO: Save load fStar + whole problem
+
+#include <filesystem>
 #include <list>
 #import "fStar.hpp"
 #include "ftxui/dom/node.hpp"
@@ -43,6 +46,9 @@ public:
     fStar::Node* operator[](int node_id) {
         return allocatedNodes[node_id];
     }
+
+    void save(filesystem::path path);
+    void load(std::string path);
 };
 
 

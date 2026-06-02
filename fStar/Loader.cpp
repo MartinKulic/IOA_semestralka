@@ -3,3 +3,12 @@
 //
 
 #include "Loader.hpp"
+
+#include <filesystem>
+
+void Loader::save(filesystem::path path) {
+
+}
+
+void Loader::load(std::string path) {
+}

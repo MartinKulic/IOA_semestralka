@@ -137,6 +137,15 @@ class Controler {
         return "Recalculate all distances";
     }
 
+    string save(std::string path) {
+        //TODO: Implement
+        return "Saved";
+    }
+
+    string load(std::string path) {
+        return "Loaded";
+    }
+
     fStar::FStar* getFStar() {
         return this->star;
     };
