@@ -65,6 +65,10 @@ private:
     bool rebuildEdgeWeightBuffers = false;
     Components edge_current_rows;
     Component edge_section; // Container::Vertical of rows
+    std::string add_edge_weight = "10";
+    fStar::Node* node_edge_to = nullptr;
+    bool is_select_node_to_mode = false;
+
 
     // Status feedback
     std::string status_msg = "Status msg";
@@ -78,8 +82,11 @@ private:
             int sub_y = (cor.y * 2)+graph_text_draw_offset.y;
 
             if (selected_node == node) {
+                c.DrawText(sub_x, sub_y, "< " + node->name + " >");
+            }else if (node_edge_to == node) {
                 c.DrawText(sub_x, sub_y, "> " + node->name + " <");
-            } else {
+            }
+            else {
                 c.DrawText(sub_x, sub_y, node->name);
             }
         }
@@ -102,11 +109,11 @@ private:
         }
     }
 
-    void FindClickedNode(int mouse_x, int mouse_y) {
+    fStar::Node* FindClickedNode(int mouse_x, int mouse_y) {
         if (mouse_x > this->graph_panel_size) {
-            return;
+            return nullptr;
         }
-        SetSelectedNode(nullptr);
+        //SetSelectedNode(nullptr);
         int target_sub_x = mouse_x * 2 - graph_text_draw_offset.x;
         int target_sub_y = mouse_y * 2 - graph_text_draw_offset.y-5;
 
@@ -123,10 +130,12 @@ private:
             // Distance in subpixel of canvas
             if (std::abs(node_sub_x - target_sub_x) <= tolerance &&
                 std::abs(node_sub_y - target_sub_y) <= tolerance) {
-                this->SetSelectedNode(node);
+                //this->SetSelectedNode(node);
+                return node;
                 break;
             }
         }
+        return nullptr;
     }
 
     void SetSelectedNode(fStar::Node *node) {
@@ -205,12 +214,42 @@ private:
     }
 
     Component EdgeSectionComponent() {
-        return Renderer(edge_section, [&] {
+        auto in_weight = Input(&add_edge_weight, "Weight");
+        auto add_edge_button = Button("Add Edge", [&, this] {
+            string respond = controler->addEdge(selected_node, node_edge_to,add_edge_weight);
+            this->status_msg = respond;
+            this->rebuildEdgeWeightBuffers = true;
+            this->is_select_node_to_mode = false;
+        });
+        auto select_node_to_checkbox = Checkbox("Select node to", &this->is_select_node_to_mode);
+
+        auto container = Container::Vertical({
+            edge_section,
+            in_weight,
+            add_edge_button,
+            select_node_to_checkbox
+        });
+
+        return Renderer(container, [&, this, in_weight, add_edge_button,select_node_to_checkbox] {
+            Elements elements;
             if (this->rebuildEdgeWeightBuffers) {
                 rebuildEdgeWeightBuffers  = false;
                 RebuildEdgeRows();
             }
-            return edge_section->Render();
+            elements.push_back(edge_section->Render());
+            elements.push_back(separatorDouble());
+            elements.push_back(text("Add Edge") | color(Color::Green));
+            elements.push_back(separator());
+            elements.push_back(hbox(
+                text(selected_node->name + " -[") | vcenter,
+                in_weight->Render() | size(WIDTH, EQUAL, 9) | vcenter,
+                text("]-> " + (node_edge_to ? node_edge_to->name : "select node to")) | vcenter,
+                filler(),
+                select_node_to_checkbox->Render() | vcenter,
+                add_edge_button->Render() | vcenter | color(Color::BlueLight)
+            ));
+
+            return vbox(elements);
         });
     }
 
@@ -242,7 +281,7 @@ private:
             elements.push_back(hbox(text("Name: "), name_in->Render()));
             elements.push_back(hbox(text("X: "), x_in->Render()));
             elements.push_back(hbox(text("Y: "), y_in->Render()));
-            elements.push_back(add_button->Render());
+            elements.push_back(add_button->Render() | color(Color::BlueLight));
 
 
             return vbox(elements);
@@ -316,7 +355,8 @@ private:
                                       " | ClickMouseX: " + std::to_string(last_click_node_x) +
                                       " | ClickMouseY: " + std::to_string(last_click_node_y) +
                                       " | MouseX: " + std::to_string(canvas_mouse_x) +
-                                      " | MouseY: " + std::to_string(canvas_mouse_y);
+                                      " | MouseY: " + std::to_string(canvas_mouse_y) +
+                                      " | ToMode: " + (is_select_node_to_mode ? "Y":"N");
 
             return vbox({
                        canvas(&c) | flex,
@@ -359,7 +399,13 @@ private:
 
             // L CLICK - SELECT
             if (mouse.button == Mouse::Left && mouse.motion == Mouse::Pressed) {
-                FindClickedNode(canvas_mouse_x, canvas_mouse_y);
+                fStar::Node* clicked_node = FindClickedNode(canvas_mouse_x, canvas_mouse_y);
+                if (this->is_select_node_to_mode) {
+                    this->node_edge_to = clicked_node;
+                }else {
+                    SetSelectedNode(clicked_node);
+                }
+
 
                 //   canvas_x = node_x * zoom + pan_x
                 coor mouseClickCoord = coor{float(mouse.x), float(mouse.y*2)};
@@ -371,7 +417,7 @@ private:
                 this->add_node_x = std::to_string(last_click_node_x);
                 this->add_node_y = std::to_string(last_click_node_y);
 
-                return selected_node!=nullptr;
+                return clicked_node!=nullptr;
             }
 
             // R CLICK
@@ -438,7 +484,8 @@ private:
             }
 
             menu_elements.push_back(separator());
-            menu_elements.push_back(text("[q to exit]") | dim);
+            menu_elements.push_back(text("[Home] to exit ToMode") | dim);
+            menu_elements.push_back(text("or hold [Alt+S] to engage ToMode") | dim);
 
             return vbox(std::move(menu_elements));
         });
@@ -564,20 +611,28 @@ public:
         );
 
 
-        // auto main_component = CatchEvent(full_view, [&](Event event) {
-        //     if (event == Event::Character('q')) {
-        //         screen.ExitLoopClosure()();
-        //         return true;
-        //     }
-        //     // 'r' shortcut to recalculate matrix from anywhere
-        //     if (event == Event::Character('r')) {
-        //         //RebuildDistanceMatrix();
-        //         return true;
-        //     }
-        //     return false;
-        // });
+        auto main_component = CatchEvent(full_view, [&](Event event) {
+            bool alt_S_pressed = false;
 
-        //screen.Loop(main_component);
-        screen.Loop(full_view);
+            if (event==Event::Home) {
+                this->is_select_node_to_mode = false;
+                return true;
+            }
+            if (event == Event::AltS) {
+                alt_S_pressed = true;
+            }
+
+            // if (event == Event::Character('q')) {
+            //     screen.ExitLoopClosure()();
+            //     return true;
+            // }
+            // 'r' shortcut to recalculate matrix from anywhere
+            // if (event == Event::Character('r')) {
+            //     //RebuildDistanceMatrix();
+            //     return true;
+            // }
+            return false;
+        });
+        screen.Loop(main_component);
     }
 };
