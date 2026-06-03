@@ -11,11 +11,15 @@
 
 class Loader {
 private:
-    NodeAllocator* nodeAllocator;
+    // NodeAllocator* nodeAllocator;
+    // fStar::FStar* star;
 
 public:
-    void save(std::filesystem::path path);
-    void load(std::string path);
+    const char* STAR_FILE_NAME = "Star.txt";
+    const char* PROBLEM_FILE_NAME = "Problem.txt";
+
+    static void save(std::filesystem::path path, fStar::FStar* star);
+    static void load(std::string path, fStar::FStar* star, NodeAllocator* nodeAllocator);
 };
 
 

@@ -33,6 +33,18 @@ public:
 
         return node;
     }
+    fStar::Node* MakeNode(std::string name, float x, float y, int id) {
+        fStar::Node* node = new fStar::Node;
+        node->name=name;
+        node->x=x;
+        node->y=y;
+        node->id=id;
+        allocatedNodes[node->id] = node;
+
+        this->nextID = max(this->nextID, id+1);
+
+        return node;
+    }
 
     void DestroyNode(int node_id) {
         fStar::Node* node = allocatedNodes[node_id];

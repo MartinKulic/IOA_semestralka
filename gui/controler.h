@@ -7,6 +7,7 @@
 #include "../fStar/fStar.hpp"
 #include  "../fStar/NodeAllocator.hpp"
 #include "../fStar/Alg.hpp"
+#include "../fStar/Loader.hpp"
 
 class Controler {
     private:
@@ -139,6 +140,7 @@ class Controler {
 
     string save(std::string path) {
         //TODO: Implement
+        Loader::save(path, star);
         return "Saved";
     }
 
