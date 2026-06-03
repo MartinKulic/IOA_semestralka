@@ -57,6 +57,14 @@ public:
         return allocatedNodes[node_id];
     }
 
+    void nuke() {
+        for (auto it = allocatedNodes.begin(); it != allocatedNodes.end(); ++it) {
+            delete (*it).second;
+        }
+
+        allocatedNodes.clear();
+    }
+
 };
 
 

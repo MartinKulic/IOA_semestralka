@@ -164,6 +164,19 @@ void FStar::modifieEdge(int from, int to, float newWeight, bool oneway) {
     }
 }
 
+void FStar::nuke() {
+    for (auto const& rec: *Edges) {
+        //rec.first //key
+        //rec.second //value
+
+        auto node_edges = rec.second;
+        //delete((node_edges)->_edges);
+        //delete(node_edges)->node_from;
+        delete(node_edges);
+    }
+    Edges->clear();
+}
+
 
 FStar::~FStar() {
     for (auto const& rec: *Edges) {

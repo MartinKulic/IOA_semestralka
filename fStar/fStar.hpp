@@ -180,6 +180,7 @@ namespace fStar {
         void deleteNode(int nodeId);
         void deleteEdge(int fromNodeId, int toNodeId, bool oneway=false);
         void modifieEdge(int from, int to, float newWeight, bool oneway=false);
+        void nuke();
 
         Node* getNode(int id){return (*Edges)[id]->node_from;};
 
@@ -190,6 +191,7 @@ namespace fStar {
         float getMinX(){return minX;};
         float getMaxY(){return maxY;};
         float getMinY(){return minY;};
+
 
         FStarIterator::NodeIterator begin_nodes() {
             return FStarIterator::NodeIterator(Edges->begin());

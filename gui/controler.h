@@ -144,7 +144,8 @@ class Controler {
         return "Saved";
     }
 
-    string load(std::string path) {
+    string load(std::string path,  bool ignoreId = false) {
+        Loader::load(path, star, loader, ignoreId);
         return "Loaded";
     }
 

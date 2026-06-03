@@ -15,11 +15,11 @@ private:
     // fStar::FStar* star;
 
 public:
-    const char* STAR_FILE_NAME = "Star.txt";
-    const char* PROBLEM_FILE_NAME = "Problem.txt";
+    static inline const char* STAR_FILE_NAME = "Star.txt";
+    static inline const char* PROBLEM_FILE_NAME = "Problem.txt";
 
     static void save(std::filesystem::path path, fStar::FStar* star);
-    static void load(std::string path, fStar::FStar* star, NodeAllocator* nodeAllocator);
+    static void load(std::filesystem::path path, fStar::FStar* star, NodeAllocator* nodeAllocator,  bool ignoreId);
 };
 
 

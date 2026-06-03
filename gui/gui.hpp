@@ -72,8 +72,8 @@ private:
     // bool is_select_node_to_mode_key_pressed = false;
     // bool is_select_node_to_mode_key_lastState = false;
 
-    std::string path_load_from = "../save.txt";
-    std::string path_save_to = "../save.txt";
+    std::string path_load_from = "../save";
+    std::string path_save_to = "../save";
 
     // Status feedback
     std::string status_msg = "Status msg";
@@ -658,7 +658,6 @@ public:
         *rTransformer += Transformer::rMove(&_canvas_pan_x, &_canvas_pan_y);
         *rTransformer += Transformer::rFlipY(0.0);
 
-        SetSelectedNode(fstar->getNode(1));
         this->edge_section = Container::Vertical({});
     }
 
