@@ -437,15 +437,16 @@ private:
                 c.DrawText(cor.x, cor.y, "x");
             }
 
+
             std::string status_text = "Zoom: " + std::to_string(_canvas_zoom).substr(0, 4) +
                                       " | PanX: " + std::to_string((int) _canvas_pan_x) +
                                       " | PanY: " + std::to_string((int) _canvas_pan_y) +
-                                      " | ClickMouseX: " + std::to_string(last_click_node_x) +
-                                      " | ClickMouseY: " + std::to_string(last_click_node_y) +
-                                      " | MouseX: " + std::to_string(canvas_mouse_x) +
-                                      " | MouseY: " + std::to_string(canvas_mouse_y) +
+                                      " | MenuScroll: " + std::to_string(menu_scroll_offset) +
+                                      " | ClickX: " + std::to_string(last_click_node_x) +
+                                      " | ClickY: " + std::to_string(last_click_node_y) +
+                                      // " | MouseX: " + std::to_string(canvas_mouse_x) +
+                                      // " | MouseY: " + std::to_string(canvas_mouse_y) +
                                       " | ToMode: " + (is_select_node_to_mode ? "Y" : "N");
-
             return vbox({
                        canvas(&c) | flex,
                        separator(),
@@ -559,60 +560,75 @@ private:
         });
 
         auto menuRenderer = Renderer(
-    container,
-    [&, info_tab, add_node_section, danger_section, load_save_section] {
-        active_node_tab = (selected_node != nullptr) ? 1 : 0;
+            container,
+            [&, info_tab, add_node_section, danger_section, load_save_section] {
+                active_node_tab = (selected_node != nullptr) ? 1 : 0;
 
-        // Update height every frame
-        menu_visible_height = Terminal::Size().dimy;
+                // Update height every frame
+                menu_visible_height = Terminal::Size().dimy;
 
-        Elements all_lines;
-        all_lines.push_back(info_tab->Render());
-        all_lines.push_back(separator());
-        all_lines.push_back(add_node_section->Render() | border);
-        all_lines.push_back(separator());
-        all_lines.push_back(danger_section->Render());
-        all_lines.push_back(separator());
-        all_lines.push_back(load_save_section->Render());
-        if (!status_msg.empty()) {
-            all_lines.push_back(separator());
-            all_lines.push_back(text(status_msg) | color(Color::Yellow));
-        }
-        all_lines.push_back(separator());
-        all_lines.push_back(text("[Home] exit ToMode | [Alt+S] toggle ToMode") | dim);
-        all_lines.push_back(text("[PgUp/PgDn] or scroll to scroll menu") | dim);
+                Elements all_lines;
+                all_lines.push_back(info_tab->Render());
+                all_lines.push_back(separator());
+                all_lines.push_back(add_node_section->Render() | border);
+                all_lines.push_back(separator());
+                all_lines.push_back(danger_section->Render());
+                all_lines.push_back(separator());
+                all_lines.push_back(load_save_section->Render());
+                if (!status_msg.empty()) {
+                    all_lines.push_back(separator());
+                    all_lines.push_back(text(status_msg) | color(Color::Yellow));
+                }
+                all_lines.push_back(separator());
+                all_lines.push_back(text("[Home] exit ToMode | [Alt+S] toggle ToMode") | dim);
+                all_lines.push_back(text("[PgUp/PgDn] or scroll to scroll menu") | dim);
+                all_lines.push_back(text("R to reset scroll") | dim);
 
-        // THIS is the key: hard pixel height on the outer box
-        // focusPosition tells yframe which Y pixel to center on
-        // yframe then clips to the hard size() constraint
-        return vbox(std::move(all_lines))
-               | focusPosition(0, menu_scroll_offset)
-               | yframe
-               | size(HEIGHT, EQUAL, menu_visible_height);
-               // no vscroll_indicator - draw our own since we know the metrics
-    });
+                // THIS is the key: hard pixel height on the outer box
+                // focusPosition tells yframe which Y pixel to center on
+                // yframe then clips to the hard size() constraint
+                return vbox(std::move(all_lines))
+                       | focusPosition(0, menu_scroll_offset)
+                       | yframe
+                       | size(HEIGHT, EQUAL, menu_visible_height);
+                // no vscroll_indicator - draw our own since we know the metrics
+            });
 
         return CatchEvent(menuRenderer, [&](Event event) {
             menu_visible_height = Terminal::Size().dimy;
 
-   // Page-style jumps work better than line-by-line since elements are tall
-   if (event == Event::ArrowDown)  { menu_scroll_offset += 3;  return true; }
-   if (event == Event::ArrowUp)    { menu_scroll_offset -= 3;  return true; }
-   if (event == Event::PageDown)   { menu_scroll_offset += menu_visible_height / 2; return true; }
-   if (event == Event::PageUp)     { menu_scroll_offset -= menu_visible_height / 2; return true; }
+            // Page-style jumps work better than line-by-line since elements are tall
+            if (event == Event::ArrowDown) {
+                menu_scroll_offset += 3;
+                return true;
+            }
+            if (event == Event::ArrowUp) {
+                menu_scroll_offset = max(menu_scroll_offset-3,0);
+                return true;
+            }
+            if (event == Event::PageDown) {
+                menu_scroll_offset += menu_visible_height / 2;
+                return true;
+            }
+            if (event == Event::PageUp) {
+                menu_scroll_offset -= menu_visible_height / 2;
+                return true;
+            }
 
-   if (event.is_mouse()) {
-       auto& m = event.mouse();
-       if (m.x > graph_panel_size) {
-           if (m.button == Mouse::WheelDown) { menu_scroll_offset += 3; return true; }
-           if (m.button == Mouse::WheelUp)   { menu_scroll_offset -= 3; return true; }
-       }
-   }
-
-   // Clamp after any change
-   if (menu_scroll_offset < 0) menu_scroll_offset = 0;
-
-   return false;
+            if (event.is_mouse()) {
+                auto &m = event.mouse();
+                if (m.x > graph_panel_size) {
+                    if (m.button == Mouse::WheelDown) {
+                        menu_scroll_offset += 3;
+                        return true;
+                    }
+                    if (m.button == Mouse::WheelUp) {
+                        menu_scroll_offset = max(menu_scroll_offset-3,0);
+                        return true;
+                    }
+                }
+            }
+            return false;
         });
     }
 
@@ -749,6 +765,11 @@ public:
 
             if (event == Event::Home) {
                 this->is_select_node_to_mode = false;
+                return true;
+            }
+
+            if (event == Event::r) {
+                menu_scroll_offset = 0;
                 return true;
             }
 
