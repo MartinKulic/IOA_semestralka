@@ -28,7 +28,7 @@ private:
     Transformer *rTransformer;
 
 
-    const coor graph_text_draw_offset{-4,-6};
+    const coor graph_text_draw_offset{-4, -6};
 
     float _canvas_zoom = 1.0f;
     float _canvas_pan_x = 10.0f;
@@ -67,7 +67,7 @@ private:
     Components edge_current_rows;
     Component edge_section; // Container::Vertical of rows
     std::string add_edge_weight = "10";
-    fStar::Node* node_edge_to = nullptr;
+    fStar::Node *node_edge_to = nullptr;
     bool is_select_node_to_mode = false;
     // bool is_select_node_to_mode_key_pressed = false;
     // bool is_select_node_to_mode_key_lastState = false;
@@ -78,24 +78,25 @@ private:
     // Status feedback
     std::string status_msg = "Status msg";
 
+    int menu_scroll_offset = 0;
+    int menu_visible_height = 40; // will be updated each frame via Terminal::Size()
+
     void DrawNodes() {
         for (FStarIterator::NodeIterator it = fstar->begin_nodes(); it != fstar->end_nodes(); ++it) {
             fStar::Node *node = *it;
             coor cor = transformer->transform(node);
 
-            int sub_x = (cor.x * 2)+graph_text_draw_offset.x; // Canvas works with sub pixels
-            int sub_y = (cor.y * 2)+graph_text_draw_offset.y;
+            int sub_x = (cor.x * 2) + graph_text_draw_offset.x; // Canvas works with sub pixels
+            int sub_y = (cor.y * 2) + graph_text_draw_offset.y;
 
             if (selected_node == node) {
                 c.DrawText(sub_x, sub_y, "< " + node->name + " >", Color::Green);
-            }else if (node_edge_to == node) {
+            } else if (node_edge_to == node) {
                 c.DrawText(sub_x, sub_y, "> " + node->name + " <");
-            }
-            else {
+            } else {
                 c.DrawText(sub_x, sub_y, node->name);
             }
         }
-
     }
 
     void DrawEdges() {
@@ -108,21 +109,20 @@ private:
 
             //if (c1.x >= c2.x) {
             coor t = coor();
-            t.x = (c1.x + c2.x)/2;
-            t.y = (c1.y + c2.y)/2;
+            t.x = (c1.x + c2.x) / 2;
+            t.y = (c1.y + c2.y) / 2;
             c.DrawText(t.x, t.y, std::to_string(edge.weight)); // in middle of points - (c1.x + c2.x)/2
             //}
         }
-
     }
 
-    fStar::Node* FindClickedNode(int mouse_x, int mouse_y) {
+    fStar::Node *FindClickedNode(int mouse_x, int mouse_y) {
         if (mouse_x > this->graph_panel_size) {
             return nullptr;
         }
         //SetSelectedNode(nullptr);
         int target_sub_x = mouse_x * 2 - graph_text_draw_offset.x;
-        int target_sub_y = mouse_y * 2 - graph_text_draw_offset.y-5;
+        int target_sub_y = mouse_y * 2 - graph_text_draw_offset.y - 5;
 
         const int tolerance = 4;
 
@@ -223,10 +223,10 @@ private:
     Component EdgeSectionComponent() {
         auto in_weight = Input(&add_edge_weight, "Weight");
         auto add_edge_button = Button("Add Edge", [&, this] {
-            string respond = controler->addEdge(selected_node, node_edge_to,add_edge_weight);
+            string respond = controler->addEdge(selected_node, node_edge_to, add_edge_weight);
             this->status_msg = respond;
             this->rebuildEdgeWeightBuffers = true;
-            this->node_edge_to=nullptr;
+            this->node_edge_to = nullptr;
             this->is_select_node_to_mode = false;
         });
         auto select_node_to_checkbox = Checkbox("Select node to", &this->is_select_node_to_mode);
@@ -242,31 +242,32 @@ private:
             calculate_weight_button
         });
 
-        return Renderer(container, [&, this, in_weight, add_edge_button,select_node_to_checkbox, calculate_weight_button] {
-            Elements elements;
-            if (this->rebuildEdgeWeightBuffers) {
-                rebuildEdgeWeightBuffers  = false;
-                RebuildEdgeRows();
-            }
-            elements.push_back(edge_section->Render());
-            elements.push_back(separatorDouble());
-            elements.push_back(text("Add Edge") | color(Color::Green));
-            elements.push_back(separator());
-            elements.push_back(hbox(
-                text(selected_node->name + " -[") | vcenter,
-                in_weight->Render() | size(WIDTH, EQUAL, 9) | vcenter,
-                text("]-> " + (node_edge_to ? node_edge_to->name : "select node to")) | vcenter,
-                filler(),
-                add_edge_button->Render() | vcenter | color(Color::BlueLight)
-            ));
-            elements.push_back(hbox(
-                calculate_weight_button->Render()| vcenter,
-                filler(),
-                select_node_to_checkbox->Render() | vcenter
-            ));
+        return Renderer(
+            container, [&, this, in_weight, add_edge_button,select_node_to_checkbox, calculate_weight_button] {
+                Elements elements;
+                if (this->rebuildEdgeWeightBuffers) {
+                    rebuildEdgeWeightBuffers = false;
+                    RebuildEdgeRows();
+                }
+                elements.push_back(edge_section->Render());
+                elements.push_back(separatorDouble());
+                elements.push_back(text("Add Edge") | color(Color::Green));
+                elements.push_back(separator());
+                elements.push_back(hbox(
+                    text(selected_node->name + " -[") | vcenter,
+                    in_weight->Render() | size(WIDTH, EQUAL, 9) | vcenter,
+                    text("]-> " + (node_edge_to ? node_edge_to->name : "select node to")) | vcenter,
+                    filler(),
+                    add_edge_button->Render() | vcenter | color(Color::BlueLight)
+                ));
+                elements.push_back(hbox(
+                    calculate_weight_button->Render() | vcenter,
+                    filler(),
+                    select_node_to_checkbox->Render() | vcenter
+                ));
 
-            return vbox(elements);
-        });
+                return vbox(elements);
+            });
     }
 
     Component AddNodeComponent() {
@@ -274,12 +275,11 @@ private:
         auto x_in = Input(&this->add_node_x, "X");
         auto y_in = Input(&this->add_node_y, "Y");
         auto add_button = Button("Add New Node", [&,this] {
-            fStar::Node* newNode = nullptr;
+            fStar::Node *newNode = nullptr;
             string s = controler->addNode(this->add_node_name, add_node_x, add_node_y, &newNode);
             this->status_msg = s;
 
             this->SetSelectedNode(newNode);
-
         });
         auto preview_location = Checkbox("Preview location", &this->draw_last_click);
 
@@ -313,7 +313,7 @@ private:
         auto y_input = Input(&edit_y, "Y coord");
 
         auto apply_button = Button("  Apply Node Changes  ", [&, this] {
-            string respond = controler->modifyNode( this->selected_node, this->edit_name, this->edit_x, this->edit_y);
+            string respond = controler->modifyNode(this->selected_node, this->edit_name, this->edit_x, this->edit_y);
             this->status_msg = respond;
         });
         auto delete_node_button = Button("  Delete node  ", [&]() {
@@ -326,36 +326,36 @@ private:
         auto edge_section_var = EdgeSectionComponent();
 
         auto container = Container::Vertical({
-           name_input,
+            name_input,
             x_input,
             y_input,
             apply_button,
             delete_node_button,
             edge_section_var
-       });
+        });
 
         return Renderer(container,
-            [&, name_input, x_input, y_input, apply_button, delete_node_button, edge_section_var] {
-                Elements menu_elements;
-                coor cor = transformer->transform(selected_node);
+                        [&, name_input, x_input, y_input, apply_button, delete_node_button, edge_section_var] {
+                            Elements menu_elements;
+                            coor cor = transformer->transform(selected_node);
 
-                menu_elements.push_back( text(" Edit Node ") | bold | color(Color::Green));
-                menu_elements.push_back( separator());
-                menu_elements.push_back( hbox({text("Name : "), name_input->Render()}));
-                menu_elements.push_back( hbox({text("Pos X : "), x_input->Render()}));
-                menu_elements.push_back( hbox({text("Pos Y : "), y_input->Render()}));
-                menu_elements.push_back( text("Drawed X: " + std::to_string(cor.x)));
-                menu_elements.push_back( text("Drawed Y: " + std::to_string(cor.y)));
-                menu_elements.push_back( separator());
-                menu_elements.push_back( hbox(apply_button->Render(), filler(), delete_node_button->Render() | color(Color::Red)));
-                menu_elements.push_back( separatorDouble());
-                menu_elements.push_back( text(" Out Edges ") | bold | color(Color::Green));
-                menu_elements.push_back( separator());
-                menu_elements.push_back( edge_section_var->Render());
+                            menu_elements.push_back(text(" Edit Node ") | bold | color(Color::Green));
+                            menu_elements.push_back(separator());
+                            menu_elements.push_back(hbox({text("Name : "), name_input->Render()}));
+                            menu_elements.push_back(hbox({text("Pos X : "), x_input->Render()}));
+                            menu_elements.push_back(hbox({text("Pos Y : "), y_input->Render()}));
+                            menu_elements.push_back(text("Drawed X: " + std::to_string(cor.x)));
+                            menu_elements.push_back(text("Drawed Y: " + std::to_string(cor.y)));
+                            menu_elements.push_back(separator());
+                            menu_elements.push_back(hbox(apply_button->Render(), filler(),
+                                                         delete_node_button->Render() | color(Color::Red)));
+                            menu_elements.push_back(separatorDouble());
+                            menu_elements.push_back(text(" Out Edges ") | bold | color(Color::Green));
+                            menu_elements.push_back(separator());
+                            menu_elements.push_back(edge_section_var->Render());
 
-                return vbox(menu_elements) | border;
-            });
-
+                            return vbox(menu_elements) | border;
+                        });
     }
 
     Component DangerOperationsComponent() {
@@ -366,7 +366,7 @@ private:
             status_msg = controler->recalculateAllDistances();
         });
 
-        auto colab = Collapsible("Danger", recalculate_distances_button | color(Color::Orange1) );
+        auto colab = Collapsible("Danger", recalculate_distances_button | color(Color::Orange1));
 
         auto container = Container::Vertical({
             colab,
@@ -378,9 +378,9 @@ private:
             elements.push_back(colab->Render());
 
             return vbox(elements) | border | color(Color::Red);
-
         });
     };
+
     Component LoadSaveComponent() {
         auto in_path_load_from = Input(&this->path_load_from, "path where to load");
         auto load_button = Button("Load", [&, this] {
@@ -399,23 +399,23 @@ private:
             load_button
         });
 
-        auto calabs = Collapsible("Load Save", Renderer(container, [&, in_path_load_from, in_path_save_from, load_button, save_button] {
-            Elements elements;
+        auto calabs = Collapsible("Load Save", Renderer(
+                                      container, [&, in_path_load_from, in_path_save_from, load_button, save_button] {
+                                          Elements elements;
 
-            elements.push_back(hbox(
-                in_path_load_from -> Render(),
-                filler(),
-                load_button->Render() | color(Color::Orange3)
-            ));
-            elements.push_back(hbox(
-                in_path_save_from -> Render(),
-                filler(),
-                save_button->Render() | color(Color::GreenLight)
-            ));
+                                          elements.push_back(hbox(
+                                              in_path_load_from->Render(),
+                                              filler(),
+                                              load_button->Render() | color(Color::Orange3)
+                                          ));
+                                          elements.push_back(hbox(
+                                              in_path_save_from->Render(),
+                                              filler(),
+                                              save_button->Render() | color(Color::GreenLight)
+                                          ));
 
-            return vbox(elements) | color(Color::Default) ;
-        })) | color(Color::Green);
-
+                                          return vbox(elements) | color(Color::Default);
+                                      })) | color(Color::Green);
 
 
         return calabs | borderDashed | color(Color::CyanLight);
@@ -431,11 +431,11 @@ private:
             DrawEdges();
             DrawNodes();
             if (draw_last_click && !selected_node) {
-            coor cor = coor{last_click_node_x, last_click_node_y};
-            cor = this->transformer->transform(cor);
-            cor = cor*2+graph_text_draw_offset;
-            c.DrawText(cor.x, cor.y, "x");
-        }
+                coor cor = coor{last_click_node_x, last_click_node_y};
+                cor = this->transformer->transform(cor);
+                cor = cor * 2 + graph_text_draw_offset;
+                c.DrawText(cor.x, cor.y, "x");
+            }
 
             std::string status_text = "Zoom: " + std::to_string(_canvas_zoom).substr(0, 4) +
                                       " | PanX: " + std::to_string((int) _canvas_pan_x) +
@@ -444,7 +444,7 @@ private:
                                       " | ClickMouseY: " + std::to_string(last_click_node_y) +
                                       " | MouseX: " + std::to_string(canvas_mouse_x) +
                                       " | MouseY: " + std::to_string(canvas_mouse_y) +
-                                      " | ToMode: " + (is_select_node_to_mode ? "Y":"N");
+                                      " | ToMode: " + (is_select_node_to_mode ? "Y" : "N");
 
             return vbox({
                        canvas(&c) | flex,
@@ -455,7 +455,6 @@ private:
 
         // Events
         auto graphComponent = CatchEvent(graphContainer, [&](Event event) {
-
             if (!event.is_mouse()) {
                 return false;
             }
@@ -487,24 +486,24 @@ private:
 
             // L CLICK - SELECT
             if (mouse.button == Mouse::Left && mouse.motion == Mouse::Pressed) {
-                fStar::Node* clicked_node = FindClickedNode(canvas_mouse_x, canvas_mouse_y);
+                fStar::Node *clicked_node = FindClickedNode(canvas_mouse_x, canvas_mouse_y);
                 if (this->is_select_node_to_mode) {
                     this->node_edge_to = clicked_node;
-                }else {
+                } else {
                     SetSelectedNode(clicked_node);
                 }
 
 
                 //   canvas_x = node_x * zoom + pan_x
-                coor mouseClickCoord = coor{float(mouse.x), float(mouse.y*2)};
+                coor mouseClickCoord = coor{float(mouse.x), float(mouse.y * 2)};
                 mouseClickCoord = this->rTransformer->reverseTransform(mouseClickCoord);
-                this->last_click_node_x =  mouseClickCoord.x;
+                this->last_click_node_x = mouseClickCoord.x;
                 this->last_click_node_y = mouseClickCoord.y;
 
                 this->add_node_x = std::to_string(last_click_node_x);
                 this->add_node_y = std::to_string(last_click_node_y);
 
-                return clicked_node!=nullptr;
+                return clicked_node != nullptr;
             }
 
             // R CLICK
@@ -538,54 +537,82 @@ private:
         auto node_info_section = NodeInfoComponent();
         auto add_node_section = AddNodeComponent();
         auto load_save_section = LoadSaveComponent();
+        auto danger_section = DangerOperationsComponent();
 
-        // node_info_section switches between tabs - add_node_section is ALWAYS active separately
         auto info_tab = Container::Tab(
             {
-                Renderer([] { // Tab 0: no selection - just a dummy non-interactive renderer
+                Renderer([] {
                     return vbox(text(" MENU ") | bold,
                                 separator(),
                                 text("Click on node to select.")) | border;
                 }),
-                node_info_section,  // Tab 1: node selected
+                node_info_section,
             },
             &active_node_tab
         );
 
-        auto danger_operation_section = DangerOperationsComponent();
-
-        // Top level container - info_tab and add_node_section are siblings, never duplicated
         auto container = Container::Vertical({
             info_tab,
             add_node_section,
-            danger_operation_section,
+            danger_section,
             load_save_section
         });
 
-        return Renderer(container, [&, info_tab, add_node_section, danger_operation_section, load_save_section] {
-            active_node_tab = (selected_node != nullptr) ? 1 : 0;
+        auto menuRenderer = Renderer(
+    container,
+    [&, info_tab, add_node_section, danger_section, load_save_section] {
+        active_node_tab = (selected_node != nullptr) ? 1 : 0;
 
-            Elements menu_elements;
-            menu_elements.push_back(info_tab->Render());
-            menu_elements.push_back(separator());
-            menu_elements.push_back(add_node_section->Render() | border);
+        // Update height every frame
+        menu_visible_height = Terminal::Size().dimy;
 
+        Elements all_lines;
+        all_lines.push_back(info_tab->Render());
+        all_lines.push_back(separator());
+        all_lines.push_back(add_node_section->Render() | border);
+        all_lines.push_back(separator());
+        all_lines.push_back(danger_section->Render());
+        all_lines.push_back(separator());
+        all_lines.push_back(load_save_section->Render());
+        if (!status_msg.empty()) {
+            all_lines.push_back(separator());
+            all_lines.push_back(text(status_msg) | color(Color::Yellow));
+        }
+        all_lines.push_back(separator());
+        all_lines.push_back(text("[Home] exit ToMode | [Alt+S] toggle ToMode") | dim);
+        all_lines.push_back(text("[PgUp/PgDn] or scroll to scroll menu") | dim);
 
-            menu_elements.push_back(separator());
-            menu_elements.push_back(danger_operation_section->Render());
+        // THIS is the key: hard pixel height on the outer box
+        // focusPosition tells yframe which Y pixel to center on
+        // yframe then clips to the hard size() constraint
+        return vbox(std::move(all_lines))
+               | focusPosition(0, menu_scroll_offset)
+               | yframe
+               | size(HEIGHT, EQUAL, menu_visible_height);
+               // no vscroll_indicator - draw our own since we know the metrics
+    });
 
-            menu_elements.push_back(separator());
-            menu_elements.push_back(load_save_section->Render());
+        return CatchEvent(menuRenderer, [&](Event event) {
+            menu_visible_height = Terminal::Size().dimy;
 
-            if (!status_msg.empty()) {
-                menu_elements.push_back(separator());
-                menu_elements.push_back(text(status_msg) | color(Color::Yellow));
-            }
-            menu_elements.push_back(separator());
-            menu_elements.push_back(text("[Home] to exit ToMode") | dim);
-            menu_elements.push_back(text("[Alt+S] to toggle ToMode") | dim);
+   // Page-style jumps work better than line-by-line since elements are tall
+   if (event == Event::ArrowDown)  { menu_scroll_offset += 3;  return true; }
+   if (event == Event::ArrowUp)    { menu_scroll_offset -= 3;  return true; }
+   if (event == Event::PageDown)   { menu_scroll_offset += menu_visible_height / 2; return true; }
+   if (event == Event::PageUp)     { menu_scroll_offset -= menu_visible_height / 2; return true; }
 
-            return vbox(std::move(menu_elements));
+   if (event.is_mouse()) {
+       auto& m = event.mouse();
+       if (m.x > graph_panel_size) {
+           if (m.button == Mouse::WheelDown) { menu_scroll_offset += 3; return true; }
+           if (m.button == Mouse::WheelUp)   { menu_scroll_offset -= 3; return true; }
+       }
+   }
+
+   // Clamp after any change
+   if (menu_scroll_offset < 0) menu_scroll_offset = 0;
+
+   return false;
         });
     }
 
@@ -702,14 +729,13 @@ public:
         });
 
         auto full_view = ResizableSplitLeft(
-            left_renderer,
-            menu_component,
-            &graph_panel_size
-        ) | (is_select_node_to_mode ? color(Color::Red) : color(Color::Default));
+                             left_renderer,
+                             menu_component,
+                             &graph_panel_size
+                         ) | (is_select_node_to_mode ? color(Color::Red) : color(Color::Default));
 
 
         auto main_component = CatchEvent(full_view, [&](Event event) {
-
             // this->is_select_node_to_mode_key_pressed = event==Event::AltS;
             // if (this->is_select_node_to_mode_key_pressed != this->is_select_node_to_mode_key_lastState) {
             //     this->is_select_node_to_mode=this->is_select_node_to_mode_key_pressed;
@@ -721,7 +747,7 @@ public:
                 return true;
             }
 
-            if (event==Event::Home) {
+            if (event == Event::Home) {
                 this->is_select_node_to_mode = false;
                 return true;
             }
