@@ -140,12 +140,22 @@ class Controler {
 
     string save(std::string path) {
         //TODO: Implement
-        Loader::save(path, star);
+        try {
+            Loader::save(path, star);
+        }catch (exception e) {
+            return e.what();
+        }
+
         return "Saved";
     }
 
     string load(std::string path,  bool ignoreId = false) {
-        Loader::load(path, star, loader, ignoreId);
+        try {
+            Loader::load(path, star, loader, ignoreId);
+        }catch (exception e) {
+            return e.what();
+        }
+
         return "Loaded";
     }
 

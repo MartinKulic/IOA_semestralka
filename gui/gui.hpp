@@ -335,12 +335,13 @@ private:
         });
 
         return Renderer(container,
-                        [&, name_input, x_input, y_input, apply_button, delete_node_button, edge_section_var] {
+                        [&, name_input, x_input, y_input, apply_button, delete_node_button, edge_section_var, this] {
                             Elements menu_elements;
                             coor cor = transformer->transform(selected_node);
 
                             menu_elements.push_back(text(" Edit Node ") | bold | color(Color::Green));
                             menu_elements.push_back(separator());
+                            menu_elements.push_back(text("ID: "+ std::to_string(this->selected_node->id)));
                             menu_elements.push_back(hbox({text("Name : "), name_input->Render()}));
                             menu_elements.push_back(hbox({text("Pos X : "), x_input->Render()}));
                             menu_elements.push_back(hbox({text("Pos Y : "), y_input->Render()}));

@@ -100,6 +100,14 @@ int main() {
     // //gui g = gui(&fsStar, &t);
     Controler c = Controler(&fsStar, &l);
 
+    c.load("../save");
+    fStar::Node* n1;
+    c.addNode("6","60","24", &n1);
+    fStar::Node* n2 = fsStar.getNode(3);
+
+    c.addEdge(n1, n2, "10");
+    c.addEdge(n1, n2, "20");
+
     gui g = gui(&fsStar, &c);
     g.run();
 

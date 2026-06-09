@@ -55,6 +55,7 @@ int FStar::_findEdgeEntryIndex_encap(Node *node_to, FStarNodeEdges *_fsr_edges) 
         if (edge.node_to == node_to) {
             return index;
         }
+        index++;
     }
     return -1;
 }
