@@ -75,10 +75,13 @@ void Loader::load(std::filesystem::path path, fStar::FStar *star, NodeAllocator 
         star->addNode(node);
         inStarFile >> nextChar;
         inStarFile.putback(nextChar);
+        //nextChar = inStarFile.peek();
     }
 
     inStarFile.ignore(std::numeric_limits<std::streamsize>::max(),'\n'); //read line = e
     inStarFile.ignore(std::numeric_limits<std::streamsize>::max(),'\n'); //read line = num of nodes
+    nextChar = inStarFile.peek();
+
     while (!inStarFile.eof()) {
         int from, to;
         float weight;
