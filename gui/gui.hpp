@@ -583,7 +583,7 @@ private:
                 all_lines.push_back(separator());
                 all_lines.push_back(text("[Home] exit ToMode | [Alt+S] toggle ToMode") | dim);
                 all_lines.push_back(text("[PgUp/PgDn] or scroll to scroll menu") | dim);
-                all_lines.push_back(text("R to reset scroll") | dim);
+                all_lines.push_back(text("[Alt+R] to reset scroll") | dim);
 
                 // THIS is the key: hard pixel height on the outer box
                 // focusPosition tells yframe which Y pixel to center on
@@ -772,7 +772,7 @@ public:
                 return true;
             }
 
-            if (event == Event::r) {
+            if (event == Event::AltR) {
                 menu_scroll_offset = 0;
                 return true;
             }

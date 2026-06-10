@@ -21,17 +21,21 @@ struct IndexEncoder {
         this->index_to_id = map<int,int>();
     }
 };
-// DO NOT USE,
-// this implementation works correctly only when id is equal to index in matrix
-//  TODO: id to index amd index to it encoding
 
 struct DM_Row {
 private:
     float* row;
+    IndexEncoder* index_encoder_;
 public:
-    const float operator [] (int from) {
+    DM_Row(float * row, IndexEncoder * index_encoder) {
+        this->row =row;
+        this->index_encoder_ = index_encoder;
+    };
 
+    const float operator [] (int from) {
+        return row[index_encoder_->id_to_index[from]];
     }
+
 };
 
 class DistanceMatrix {
@@ -73,9 +77,9 @@ private:
 
              //For each neighbor v of u, check if the path through u gives a smaller distance than the current dist[v].
              //If it does, update dist[v] = dist[u] + edge weight(d) and push (dist[v], v) into the priority queue.
-             for (fStar::FStarIterator::OutEdgeIterator it = fstar->begin_out_edges(u_ind); it != fstar->end_out_edges(u_ind); ++it) {
+             for (fStar::FStarIterator::OutEdgeIterator it = fstar->begin_out_edges(index_encoder_->index_to_id[u_ind]); it != fstar->end_out_edges(index_encoder_->index_to_id[u_ind]); ++it) {
                  Edge edge = *it;
-                 int v_ind = edge.to->id;
+                 int v_ind = index_encoder_->id_to_index[ edge.to->id ];
                  float newDistance = this->Distances[from_index][u_ind] + edge.weight;
 
                  if (newDistance < this->Distances[from_index][v_ind] ) {
@@ -116,8 +120,9 @@ public:
 
     };
 
-    const float* operator [] (int from) {
-        return Distances[from];
+    DM_Row operator [] (int from) {
+
+        return DM_Row( Distances[this->index_encoder_->id_to_index[from]], this->index_encoder_);
     }
 
     int size() const {
