@@ -156,6 +156,9 @@ class Controler {
             return e.what();
         }
 
+        delete(this->distancaMatrix);
+        this->distancaMatrix = new DistanceMatrix(this->star);
+
         return "Loaded";
     }
 

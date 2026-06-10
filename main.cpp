@@ -26,22 +26,22 @@ int main() {
 
     NodeAllocator l = NodeAllocator();
 
-    // for (int i = 0; i < 9; i++) {
-    //     fStar::Node* n = l.MakeNode(to_string(i+1), float(coordList[i*2]), float(coordList[(i*2)+1]));//fStar::Node({float(coordList[i*2]), float(coordList[(i*2)+1]), i, to_string(i+1)});
-    // }
+    for (int i = 0; i < 9; i++) {
+        fStar::Node* n = l.MakeNode(to_string(i+1), float(coordList[i*2]), float(coordList[(i*2)+1]));//fStar::Node({float(coordList[i*2]), float(coordList[(i*2)+1]), i, to_string(i+1)});
+    }
 
     FStar fsStar = FStar();
 
-    // for (int i = 0; i < 24; i++) {
-    //     int id_node_from = edgesList[i*2]-1;
-    //     int id_node_to = edgesList[(i*2)+1]-1;
-    //     fStar::Node* node_from = l[id_node_from];
-    //     fStar::Node* node_to = l[id_node_to];
-    //
-    //     float weight =  sqrt(pow(node_to->x - node_from->x, 2) + pow(node_to->y - node_from->y ,  2));
-    //
-    //     fsStar.addEdge(node_from, node_to, weight, true);
-    // }
+    for (int i = 0; i < 24; i++) {
+        int id_node_from = edgesList[i*2]-1;
+        int id_node_to = edgesList[(i*2)+1]-1;
+        fStar::Node* node_from = l[id_node_from];
+        fStar::Node* node_to = l[id_node_to];
+
+        float weight =  sqrt(pow(node_to->x - node_from->x, 2) + pow(node_to->y - node_from->y ,  2));
+
+        fsStar.addEdge(node_from, node_to, weight, true);
+    }
 
 
     cout << "good?" << endl;
@@ -100,13 +100,13 @@ int main() {
     // //gui g = gui(&fsStar, &t);
     Controler c = Controler(&fsStar, &l);
 
-    c.load("../save");
-    fStar::Node* n1;
-    c.addNode("6","60","24", &n1);
-    fStar::Node* n2 = fsStar.getNode(3);
-
-    c.addEdge(n1, n2, "10");
-    c.addEdge(n1, n2, "20");
+    // c.load("../save");
+    // fStar::Node* n1;
+    // c.addNode("6","60","24", &n1);
+    // fStar::Node* n2 = fsStar.getNode(3);
+    //
+    // c.addEdge(n1, n2, "10");
+    // c.addEdge(n1, n2, "20");
 
     gui g = gui(&fsStar, &c);
     g.run();

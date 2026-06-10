@@ -703,6 +703,9 @@ public:
         *rTransformer += Transformer::rFlipY(0.0);
 
         this->edge_section = Container::Vertical({});
+
+        // this->_canvas_pan_x = fstar->getMinX();
+        // this->_canvas_pan_y = fstar->getMaxY();
     }
 
     ~gui() {

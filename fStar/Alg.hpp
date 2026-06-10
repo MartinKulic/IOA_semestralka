@@ -12,17 +12,34 @@
 
 using namespace fStar;
 
-class IndexEncoder {
+struct IndexEncoder {
+    map<int,int> id_to_index;
+    map<int,int> index_to_id;
 
+    public: IndexEncoder() {
+        this->id_to_index = map<int,int>();
+        this->index_to_id = map<int,int>();
+    }
 };
 // DO NOT USE,
 // this implementation works correctly only when id is equal to index in matrix
 //  TODO: id to index amd index to it encoding
+
+struct DM_Row {
+private:
+    float* row;
+public:
+    const float operator [] (int from) {
+
+    }
+};
+
 class DistanceMatrix {
 private:
     FStar* fstar;
     float** Distances;
     int _size;
+    IndexEncoder* index_encoder_;
 
     struct index_weight_holder {
         float weight;
@@ -72,11 +89,21 @@ private:
 public:
     DistanceMatrix(FStar* star) : fstar(star) {
         Distances = new float*[fstar->sizeNodes()];
+        this->index_encoder_ = new IndexEncoder();
+
         for (int i = 0; i < fstar->sizeNodes(); i++) {
             Distances[i] = new float[fstar->sizeNodes()]();
             std::fill(Distances[i], Distances[i] + fstar->sizeNodes(), std::numeric_limits<float>::infinity());
         }
         this->_size = star->sizeNodes();
+
+        auto star_node_end = this->fstar->end_nodes();
+        int metrix_index = 0;
+        for (auto node = this->fstar->begin_nodes(); node != star_node_end; ++node) {
+            this->index_encoder_->index_to_id[metrix_index] = (*node)->id;
+            this->index_encoder_->id_to_index[(*node)->id] = metrix_index;
+            metrix_index++;
+        }
 
         // for (fStar::FStarIterator::EdgeIterator it = star->begin_edges(); it != star->end_edges(); ++it) {
         //     fStar::Edge edge = *it;
@@ -102,6 +129,8 @@ public:
             delete[] Distances[i];
         }
         delete[] Distances;
+
+        delete(this->index_encoder_);
     }
 
 

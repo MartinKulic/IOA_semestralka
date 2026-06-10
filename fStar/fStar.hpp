@@ -4,6 +4,7 @@
 
 #ifndef IOA_SEMESTRALKA_FSTAR_HPP
 #define IOA_SEMESTRALKA_FSTAR_HPP
+#include <limits>
 #include <map>
 #include <string>
 #include <vector>
@@ -166,7 +167,10 @@ namespace fStar {
     protected:
         map<int, FStarNodeEdges*>* Edges;
         //map<int, Node*>* Nodes;
-        float minX, maxX, minY, maxY;
+        float minX = std::numeric_limits<float>::infinity();
+        float maxX = -std::numeric_limits<float>::infinity();
+        float minY = std::numeric_limits<float>::infinity();
+        float maxY = -std::numeric_limits<float>::infinity();
         size_t numEdges = 0;
 
         FStarNodeEdges* _findNodeEdges_encap(Node* node);
