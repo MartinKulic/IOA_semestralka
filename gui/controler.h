@@ -9,21 +9,23 @@
 #include "../fStar/Alg.hpp"
 #include "../fStar/Loader.hpp"
 
+#define NodeType fStar::Node
+
 class Controler {
     private:
-    fStar::FStar* star;
+    fStar::FStar<Node>* star;
     NodeAllocator* loader;
     DistanceMatrix* distancaMatrix;
 
     public:
-    Controler(fStar::FStar* fstar, NodeAllocator* loader): star(fstar), loader(loader) {
+    Controler(fStar::FStar<NodeType>* fstar, NodeAllocator* loader): star(fstar), loader(loader) {
         this->distancaMatrix = new DistanceMatrix(fstar);
     };
     ~Controler() {
         delete distancaMatrix;
     }
 
-    string addNode(string name, string sx, string sy, fStar::Node** newNodeToRet) {
+    string addNode(string name, string sx, string sy, NodeType** newNodeToRet) {
         float x,y;
         try {
             x = std::stof(sx);
@@ -92,11 +94,11 @@ class Controler {
 
         return "OK";
     };
-    string deleteEdge(fStar::Edge edgeToDel) {
+    string deleteEdge(fStar::Edge<NodeType> edgeToDel) {
         star->deleteEdge(edgeToDel.from->id, edgeToDel.to->id);
         return"Edge to " + edgeToDel.to->name + " deleted.";
     };
-    string modifyEdge(fStar::Edge edge, string newWeoght) {
+    string modifyEdge(fStar::Edge<NodeType> edge, string newWeoght) {
         float newWeight;
         try {
             newWeight = std::stof(newWeoght);
@@ -126,7 +128,7 @@ class Controler {
     string recalculateAllDistances() {
         auto endEdgeIt = star->end_edges();
         for (auto edgeIt = star->begin_edges(); edgeIt != endEdgeIt; ++edgeIt) {
-            fStar::Edge edge = *edgeIt;
+            fStar::Edge<NodeType> edge = (*edgeIt);
 
             fStar::Node* from = edge.from;
             fStar::Node* to = edge.to;
@@ -141,7 +143,7 @@ class Controler {
     string save(std::string path) {
         //TODO: Implement
         try {
-            Loader::save(path, star);
+            Loader<NodeType>::save(path, star);
         }catch (exception e) {
             return e.what();
         }
@@ -151,7 +153,7 @@ class Controler {
 
     string load(std::string path,  bool ignoreId = false) {
         try {
-            Loader::load(path, star, loader, ignoreId);
+            Loader<NodeType>::load(path, star, loader, ignoreId);
         }catch (exception e) {
             return e.what();
         }
@@ -162,7 +164,7 @@ class Controler {
         return "Loaded";
     }
 
-    fStar::FStar* getFStar() {
+    fStar::FStar<NodeType>* getFStar() {
         return this->star;
     };
     DistanceMatrix* D() {

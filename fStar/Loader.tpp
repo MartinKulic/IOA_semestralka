@@ -9,9 +9,8 @@
 
 #include "ftxui/dom/node.hpp"
 
-
-void Loader::save(std::filesystem::path path, fStar::FStar* star) {
-    //TODO: Validate path - mkdir -p
+template <typename Tnode>
+void Loader<Tnode>::save(std::filesystem::path path, fStar::FStar<Tnode>* star) {
     std::filesystem::create_directories(path);
 
     std::filesystem::path starFilePath = path / Loader::STAR_FILE_NAME;
@@ -29,14 +28,15 @@ void Loader::save(std::filesystem::path path, fStar::FStar* star) {
 
     auto endEdges = star->end_edges();
     for (auto edgeIt = star->begin_edges(); edgeIt != endEdges; ++edgeIt) {
-        fStar::Edge edge = *edgeIt;
+        fStar::Edge<Tnode> edge = *edgeIt;
         outStarFile << edge.from->id << " " << edge.to->id << " " << edge.weight << "\n";
     }
     outStarFile.close();
 
 }
 
-void Loader::load(std::filesystem::path path, fStar::FStar *star, NodeAllocator *nodeAllocator, bool ignoreId) {
+template <typename Tnode>
+void Loader<Tnode>::load(std::filesystem::path path, fStar::FStar<Tnode> *star, NodeAllocator *nodeAllocator, bool ignoreId) {
     //TODO: Validate path - if path bad = exception;
 
     star->nuke();

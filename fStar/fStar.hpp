@@ -8,6 +8,7 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <type_traits>
 
 
 using namespace std;
@@ -31,25 +32,27 @@ namespace fStar {
         string name;
     };
 
+    template<typename Tnode>
     struct Edge {
-        Node* from;
-        Node* to;
+        Tnode* from;
+        Tnode* to;
         float weight;
     };
 
-    //template <typedef node_type>
+    template <typename Tnode>
     struct FStarEdgeEntry {
-        Node* node_to;
+        Tnode* node_to;
         float weight;
     };
 
+    template <typename Tnode>
     struct FStarNodeEdges {
-        Node* node_from;
-        vector<FStarEdgeEntry>* _edges;
-        FStarNodeEdges(){this->_edges = new vector<FStarEdgeEntry>();};
+        Tnode* node_from;
+        vector<FStarEdgeEntry<Tnode>>* _edges;
+        FStarNodeEdges(){this->_edges = new vector<FStarEdgeEntry<Tnode>>();};
         ~FStarNodeEdges(){delete this->_edges;};
 
-        void deleteEdge(Node* to) {
+        void deleteEdge(Tnode* to) {
             //std::erase_if(this->_edges, [to](FStarEdgeEntry cur){return cur.node_to == to;});
             int index = 0;
             for (FStarEdgeEntry edge : *this->_edges) {
@@ -71,13 +74,14 @@ namespace fStar {
     namespace FStarIterator {
         using namespace fStar;
 
+        template<typename Tnode>
         class NodeIterator {
             friend class FStar;
         private:
-            map<int, FStarNodeEdges*>::iterator it;
+            typename map<int, FStarNodeEdges<Tnode>*>::iterator it;
 
         public:
-            NodeIterator(map<int, FStarNodeEdges*>::iterator it) : it(it) {}
+            NodeIterator(typename map<int, FStarNodeEdges<Tnode>*>::iterator it) : it(it) {}
 
             virtual NodeIterator& operator++() {
                 ++it;
@@ -88,16 +92,17 @@ namespace fStar {
                 return it != other.it;
             }
 
-            virtual Node* operator*() const {
+            virtual Tnode* operator*() const {
                 return it->second->node_from;
             }
         };
 
+        template<typename Tnode>
         class EdgeIterator{
         private:
-            map<int, FStarNodeEdges*>::iterator map_it;
-            map<int, FStarNodeEdges*>::iterator map_end;
-            vector<FStarEdgeEntry>::iterator vec_it;
+            typename map<int, FStarNodeEdges<Tnode>*>::iterator map_it;
+            typename map<int, FStarNodeEdges<Tnode>*>::iterator map_end;
+            typename vector<FStarEdgeEntry<Tnode>>::iterator vec_it;
 
             void advance_to_valid() {
                 while (map_it != map_end) {
@@ -114,7 +119,7 @@ namespace fStar {
 
         public:
             EdgeIterator(
-                map<int, FStarNodeEdges*>::iterator m_it, map<int, FStarNodeEdges*>::iterator m_end) : map_it(m_it), map_end(m_end)
+                typename map<int, FStarNodeEdges<Tnode>*>::iterator m_it, typename map<int, FStarNodeEdges<Tnode>*>::iterator m_end) : map_it(m_it), map_end(m_end)
             {
                 if (map_it != map_end) {
                     vec_it = map_it->second->_edges->begin();
@@ -133,18 +138,19 @@ namespace fStar {
                        (map_it != map_end && vec_it != other.vec_it);
             }
 
-            Edge operator*() const {
+            Edge<Tnode> operator*() const {
                 FStarEdgeEntry edge_entry = *vec_it;
-                return Edge({map_it->second->node_from, edge_entry.node_to, edge_entry.weight});
+                return Edge<Tnode>({map_it->second->node_from, edge_entry.node_to, edge_entry.weight});
             }
         };
 
+        template<typename Tnode>
         class OutEdgeIterator {
         private:
-            vector<FStarEdgeEntry>::iterator it;
-            Node* node_from;
+            typename vector<FStarEdgeEntry<Tnode>>::iterator it;
+            Tnode* node_from;
         public:
-            OutEdgeIterator(vector<FStarEdgeEntry>::iterator iterator, Node* from) : it(iterator), node_from(from) {};
+            OutEdgeIterator(typename vector<FStarEdgeEntry<Tnode>>::iterator iterator, Tnode* from) : it(iterator), node_from(from) {};
 
             virtual OutEdgeIterator& operator++() {
                 ++it;
@@ -155,17 +161,19 @@ namespace fStar {
                 return it != other.it;
             }
 
-            virtual Edge operator*() const {
-                return Edge({node_from, it->node_to, it->weight});
+            virtual Edge<Tnode> operator*() const {
+                return Edge<Tnode>({node_from, it->node_to, it->weight});
             }
         };
     };
 
 
     //template <typedef node_type>
+    template <typename Tnode>
     class FStar  {
+        static_assert(std::is_base_of<Tnode, Tnode>::value, "Tnode must be Node or derived from it");
     protected:
-        map<int, FStarNodeEdges*>* Edges;
+        map<int, FStarNodeEdges<Tnode>*>* Edges;
         //map<int, Node*>* Nodes;
         float minX = std::numeric_limits<float>::infinity();
         float maxX = -std::numeric_limits<float>::infinity();
@@ -173,20 +181,20 @@ namespace fStar {
         float maxY = -std::numeric_limits<float>::infinity();
         size_t numEdges = 0;
 
-        FStarNodeEdges* _findNodeEdges_encap(Node* node);
-        FStarNodeEdges* _addNode_encap(Node* node);
-        int _findEdgeEntryIndex_encap(Node* node_to, FStarNodeEdges* _fsr_edges);
+        FStarNodeEdges<Tnode>* _findNodeEdges_encap(Tnode* node);
+        FStarNodeEdges<Tnode>* _addNode_encap(Tnode* node);
+        int _findEdgeEntryIndex_encap(Tnode* node_to, FStarNodeEdges<Tnode>* _fsr_edges);
     public:
         FStar();
 
-        void addNode(Node* node);
-        void addEdge(Node* from, Node* to, float weight, bool oneway=false);
+        void addNode(Tnode* node);
+        void addEdge(Tnode* from, Tnode* to, float weight, bool oneway=false);
         void deleteNode(int nodeId);
         void deleteEdge(int fromNodeId, int toNodeId, bool oneway=false);
         void modifieEdge(int from, int to, float newWeight, bool oneway=false);
         void nuke();
 
-        Node* getNode(int id){return (*Edges)[id]->node_from;};
+        Tnode* getNode(int id){return (*Edges)[id]->node_from;};
 
         size_t sizeNodes(){return this->Edges->size();}
         size_t sizeEdges(){return numEdges;};
@@ -197,39 +205,35 @@ namespace fStar {
         float getMinY(){return minY;};
 
 
-        FStarIterator::NodeIterator begin_nodes() {
-            return FStarIterator::NodeIterator(Edges->begin());
+        FStarIterator::NodeIterator<Tnode> begin_nodes() {
+            return FStarIterator::NodeIterator<Tnode>(Edges->begin());
         }
-        FStarIterator::NodeIterator end_nodes() {
-            return FStarIterator::NodeIterator(Edges->end());
-        }
-
-        FStarIterator::EdgeIterator begin_edges() {
-            return FStarIterator::EdgeIterator(Edges->begin(), Edges->end());
-        }
-        FStarIterator::EdgeIterator end_edges() {
-            return FStarIterator::EdgeIterator(Edges->end(), Edges->end());
+        FStarIterator::NodeIterator<Tnode> end_nodes() {
+            return FStarIterator::NodeIterator<Tnode>(Edges->end());
         }
 
-        FStarIterator::OutEdgeIterator begin_out_edges(int node_from_id) {
-            FStarNodeEdges* _node_edg = (*this->Edges)[node_from_id];
-
-            return FStarIterator::OutEdgeIterator(_node_edg->_edges->begin(), _node_edg->node_from);
+        FStarIterator::EdgeIterator<Tnode> begin_edges() {
+            return FStarIterator::EdgeIterator<Tnode>(Edges->begin(), Edges->end());
         }
-        FStarIterator::OutEdgeIterator end_out_edges(int node_from_id) {
-            FStarNodeEdges* _node_edg = (*this->Edges)[node_from_id];
+        FStarIterator::EdgeIterator<Tnode> end_edges() {
+            return FStarIterator::EdgeIterator<Tnode>(Edges->end(), Edges->end());
+        }
 
-            return FStarIterator::OutEdgeIterator(_node_edg->_edges->end(), _node_edg->node_from);
+        FStarIterator::OutEdgeIterator<Tnode> begin_out_edges(int node_from_id) {
+            FStarNodeEdges<Tnode>* _node_edg = (*this->Edges)[node_from_id];
+
+            return FStarIterator::OutEdgeIterator<Tnode>(_node_edg->_edges->begin(), _node_edg->node_from);
+        }
+        FStarIterator::OutEdgeIterator<Tnode> end_out_edges(int node_from_id) {
+            FStarNodeEdges<Tnode>* _node_edg = (*this->Edges)[node_from_id];
+
+            return FStarIterator::OutEdgeIterator<Tnode>(_node_edg->_edges->end(), _node_edg->node_from);
         }
 
         ~FStar();
     };
 }
 
-
-
-
-
-
+#include "fStar.tpp"
 
 #endif //IOA_SEMESTRALKA_FSTAR_HPP

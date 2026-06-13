@@ -2,6 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/IOA.iml" filepath="$PROJECT_DIR$/.idea/IOA.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/IOA_semestralka.iml" filepath="$PROJECT_DIR$/.idea/IOA_semestralka.iml" />
     </modules>
   </component>

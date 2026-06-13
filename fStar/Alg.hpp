@@ -40,7 +40,7 @@ public:
 
 class DistanceMatrix {
 private:
-    FStar* fstar;
+    FStar<Node>* fstar;
     float** Distances;
     int _size;
     IndexEncoder* index_encoder_;
@@ -91,7 +91,7 @@ private:
     }
 
 public:
-    DistanceMatrix(FStar* star) : fstar(star) {
+    DistanceMatrix(FStar<Node>* star) : fstar(star) {
         Distances = new float*[fstar->sizeNodes()];
         this->index_encoder_ = new IndexEncoder();
 

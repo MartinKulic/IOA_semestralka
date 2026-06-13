@@ -10,21 +10,21 @@
 
 
 using namespace fStar;
-
-FStar::FStar() {
+template<typename Tnode>
+FStar<Tnode>::FStar() {
     //this->Nodes = new map<int, Node*>();
-    this->Edges = new map<int, FStarNodeEdges*>();
+    this->Edges = new map<int, FStarNodeEdges<Tnode>*>();
 }
-
-FStarNodeEdges * FStar::_findNodeEdges_encap(Node *node) {
+template<typename Tnode>
+FStarNodeEdges<Tnode> * FStar<Tnode>::_findNodeEdges_encap(Tnode *node) {
     auto it = this->Edges->find(node->id);
     if (it == this->Edges->end()) {
         return nullptr;
     }
     return it->second;
 }
-
-FStarNodeEdges * FStar::_addNode_encap(Node *node) {
+template<typename Tnode>
+FStarNodeEdges<Tnode> * FStar<Tnode>::_addNode_encap(Tnode *node) {
     if (this->Edges->find(node->id) != this->Edges->end()) {
         throw std::invalid_argument("Node with id" + to_string(node->id) + " already exists.");
     }
@@ -42,14 +42,15 @@ FStarNodeEdges * FStar::_addNode_encap(Node *node) {
         this->minY = node->y;
     }
 
-    FStarNodeEdges* nodeRecord = new FStarNodeEdges();
+    FStarNodeEdges<Tnode>* nodeRecord = new FStarNodeEdges<Tnode>();
     nodeRecord->node_from = node;
     (*this->Edges)[node->id] = nodeRecord;
     return nodeRecord;
 }
 
 /// Return: index of node_to in FStarNodeEdges _edges vector; -1 if not found
-int FStar::_findEdgeEntryIndex_encap(Node *node_to, FStarNodeEdges *_fsr_edges) {
+template<typename Tnode>
+int FStar<Tnode>::_findEdgeEntryIndex_encap(Tnode *node_to, FStarNodeEdges<Tnode> *_fsr_edges) {
     int index = 0;
     for (FStarEdgeEntry edge: *_fsr_edges->_edges) {
         if (edge.node_to == node_to) {
@@ -60,44 +61,47 @@ int FStar::_findEdgeEntryIndex_encap(Node *node_to, FStarNodeEdges *_fsr_edges) 
     return -1;
 }
 
-void FStar::addNode(Node *node) {
+template<typename Tnode>
+void FStar<Tnode>::addNode(Tnode *node) {
     this->_addNode_encap(node);
 }
 
-void FStar::deleteNode(int nodeFrom) {
+template<typename Tnode>
+void FStar<Tnode>::deleteNode(int nodeFrom) {
     auto mapEntry = this->Edges->find(nodeFrom);
     if (mapEntry == this->Edges->end()) {
         //node is not in fStar
         return;
     }
-    FStarNodeEdges* nodeEdgesToDelete = mapEntry->second;
+    FStarNodeEdges<Tnode>* nodeEdgesToDelete = mapEntry->second;
     for (FStarEdgeEntry edge: *nodeEdgesToDelete->_edges) {
-        Node* neigbour = edge.node_to;
+        Tnode* neigbour = edge.node_to;
         auto mapEntryN = this->Edges->find(neigbour->id);
         if (mapEntryN == this->Edges->end()) {
             //node is not in fStar
             continue;
         }
-        FStarNodeEdges* nodeEdgesN = mapEntryN->second;
+        FStarNodeEdges<Tnode>* nodeEdgesN = mapEntryN->second;
         nodeEdgesN->deleteEdge(nodeEdgesToDelete->node_from);
         this->numEdges--;
     }
     this->numEdges -= nodeEdgesToDelete->_edges->size();
 
-    Node* nodeToDelete = nodeEdgesToDelete->node_from;
+    Tnode* nodeToDelete = nodeEdgesToDelete->node_from;
     this->Edges->erase(mapEntry);
     delete nodeEdgesToDelete;
     //delete nodeToDelete;
 }
 
-void FStar::addEdge(Node *from, Node *to, float weight, bool oneway) {
-    FStarNodeEdges* _fsr_nodeFromEdges = this->_findNodeEdges_encap(from);
+template<typename Tnode>
+void FStar<Tnode>::addEdge(Tnode *from, Tnode *to, float weight, bool oneway) {
+    FStarNodeEdges<Tnode>* _fsr_nodeFromEdges = this->_findNodeEdges_encap(from);
     if (_fsr_nodeFromEdges == nullptr) {
         //Node does not exist jet
         _fsr_nodeFromEdges = this->_addNode_encap(from);
     }
 
-    FStarNodeEdges* _fsr_nodeToEdges = this->_findNodeEdges_encap(to);
+    FStarNodeEdges<Tnode>* _fsr_nodeToEdges = this->_findNodeEdges_encap(to);
     if (_fsr_nodeToEdges == nullptr) {
         _fsr_nodeToEdges = this->_addNode_encap(to);
     }
@@ -109,7 +113,7 @@ void FStar::addEdge(Node *from, Node *to, float weight, bool oneway) {
         this->numEdges--;
     }
 
-    FStarEdgeEntry edge = FStarEdgeEntry();
+    FStarEdgeEntry edge = FStarEdgeEntry<Tnode>();
     edge.node_to = to;
     edge.weight = weight;
 
@@ -120,7 +124,8 @@ void FStar::addEdge(Node *from, Node *to, float weight, bool oneway) {
     }
 }
 
-void FStar::deleteEdge(int fromNodeId, int toNodeId, bool oneway) {
+template<typename Tnode>
+void FStar<Tnode>::deleteEdge(int fromNodeId, int toNodeId, bool oneway) {
     auto mapEntryFrom = this->Edges->find(fromNodeId);
     if (mapEntryFrom == this->Edges->end()) {
         return; //node is not in fStar
@@ -130,8 +135,8 @@ void FStar::deleteEdge(int fromNodeId, int toNodeId, bool oneway) {
         return; //node is not in fStar
     }
 
-    FStarNodeEdges* nodeEdgesFrom = mapEntryFrom->second;
-    FStarNodeEdges* nodeEdgesTo = mapEntryTo->second;
+    FStarNodeEdges<Tnode>* nodeEdgesFrom = mapEntryFrom->second;
+    FStarNodeEdges<Tnode>* nodeEdgesTo = mapEntryTo->second;
     nodeEdgesFrom->deleteEdge(nodeEdgesTo->node_from);
     numEdges--;
 
@@ -142,14 +147,15 @@ void FStar::deleteEdge(int fromNodeId, int toNodeId, bool oneway) {
 
 }
 
-void FStar::modifieEdge(int from, int to, float newWeight, bool oneway) {
+template<typename Tnode>
+void FStar<Tnode>::modifieEdge(int from, int to, float newWeight, bool oneway) {
     auto mapEntryFrom = this->Edges->find(from);
     if (mapEntryFrom == this->Edges->end()) {
         return; //node is not in fStar
     }
-    FStarNodeEdges* fromEntry = mapEntryFrom->second;
-    FStarEdgeEntry* edgeEntryToMod = nullptr;
-     for (FStarEdgeEntry& edge: *fromEntry->_edges) {
+    FStarNodeEdges<Tnode>* fromEntry = mapEntryFrom->second;
+    FStarEdgeEntry<Tnode>* edgeEntryToMod = nullptr;
+     for (FStarEdgeEntry<Tnode>& edge: *fromEntry->_edges) {
         if (edge.node_to->id == to) {
             edgeEntryToMod = &edge;
             break;
@@ -165,7 +171,8 @@ void FStar::modifieEdge(int from, int to, float newWeight, bool oneway) {
     }
 }
 
-void FStar::nuke() {
+template<typename Tnode>
+void FStar<Tnode>::nuke() {
     for (auto const& rec: *Edges) {
         //rec.first //key
         //rec.second //value
@@ -178,8 +185,8 @@ void FStar::nuke() {
     Edges->clear();
 }
 
-
-FStar::~FStar() {
+template<typename Tnode>
+FStar<Tnode>::~FStar() {
     for (auto const& rec: *Edges) {
         //rec.first //key
         //rec.second //value

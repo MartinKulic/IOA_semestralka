@@ -20,7 +20,7 @@ using namespace fStar;
 
 class gui {
 private:
-    FStar *fstar;
+    FStar<NodeType> *fstar;
     Controler *controler;
 
     Canvas c;
@@ -692,7 +692,7 @@ private:
     }
 
 public:
-    gui(FStar *fstar, Controler *controler) : fstar(fstar), controler(controler) {
+    gui(FStar<NodeType> *fstar, Controler *controler) : fstar(fstar), controler(controler) {
         this->transformer = new Transformer();
         *transformer += Transformer::Scale(&_canvas_zoom);
         *transformer += Transformer::Move(&_canvas_pan_x, &_canvas_pan_y);

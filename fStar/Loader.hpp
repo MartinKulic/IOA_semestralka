@@ -8,7 +8,7 @@
 #include "./NodeAllocator.hpp"
 
 // TODO: Save load fStar + whole problem
-
+template <typename Tnode>
 class Loader {
 private:
     // NodeAllocator* nodeAllocator;
@@ -18,9 +18,10 @@ public:
     static inline const char* STAR_FILE_NAME = "Star.txt";
     static inline const char* PROBLEM_FILE_NAME = "Problem.txt";
 
-    static void save(std::filesystem::path path, fStar::FStar* star);
-    static void load(std::filesystem::path path, fStar::FStar* star, NodeAllocator* nodeAllocator,  bool ignoreId);
+    static void save(std::filesystem::path path, fStar::FStar<Tnode>* star);
+    static void load(std::filesystem::path path, fStar::FStar<Tnode>* star, NodeAllocator* nodeAllocator,  bool ignoreId);
 };
 
+#include "Loader.tpp"
 
 #endif //IOA_SEMESTRALKA_LOADER_H

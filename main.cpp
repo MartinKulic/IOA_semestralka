@@ -30,7 +30,7 @@ int main() {
     //     fStar::Node* n = l.MakeNode(to_string(i+1), float(coordList[i*2]), float(coordList[(i*2)+1]));//fStar::Node({float(coordList[i*2]), float(coordList[(i*2)+1]), i, to_string(i+1)});
     // }
 
-    FStar fsStar = FStar();
+    FStar fsStar = FStar<NodeType>();
 
     // for (int i = 0; i < 24; i++) {
     //     int id_node_from = edgesList[i*2]-1;
