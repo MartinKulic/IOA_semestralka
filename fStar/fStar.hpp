@@ -12,6 +12,7 @@
 
 using namespace std;
 namespace fStar {
+
     struct coor {
         float x;
         float y;
@@ -29,6 +30,10 @@ namespace fStar {
     struct Node : public coor {
         int id;
         string name;
+
+        static constexpr uint NO_GROUP = -1;
+        bool is_center = false;
+        uint belongs_to_p_group = NO_GROUP;
     };
 
     struct Edge {
