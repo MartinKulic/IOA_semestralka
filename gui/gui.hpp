@@ -261,7 +261,7 @@ private:
             status_msg = controler->addEdge(selected_node, node_edge_to, add_edge_weight);
             edge_section_built_for = nullptr;
             node_edge_to = nullptr;
-            is_select_node_to_mode = false;
+            //is_select_node_to_mode = false;
         });
         auto sel_cb = Checkbox("Select node to", &is_select_node_to_mode);
         auto calc_btn = Button("Calculate weight", [&] {
@@ -340,7 +340,7 @@ private:
         });
         auto del_btn = Button("  Delete node  ", [&] {
             std::string name = selected_node->name;
-            fstar->deleteNode(selected_node->id);
+            controler->deleteNode(selected_node->id);
             SetSelectedNode(nullptr);
             status_msg = "Deleted node " + name;
         });

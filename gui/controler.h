@@ -14,10 +14,27 @@ class Controler {
     fStar::FStar* star;
     NodeAllocator* loader;
     DistanceMatrix* distancaMatrix;
+    vector<fStar::Node*> centers;
+
+private:
+    void rebuildCenterContainer() {
+        for (int i = 0; i < this->centers.size(); i++) {
+            (this->centers[i])->belongs_to_p_group = i;
+        }
+    }
 
     public:
     Controler(fStar::FStar* fstar, NodeAllocator* loader): star(fstar), loader(loader) {
         this->distancaMatrix = new DistanceMatrix(fstar);
+
+        auto nodeEnd = star->end_nodes();
+        for (auto it = star->begin_nodes(); it != nodeEnd; ++it) {
+            fStar::Node* node = *it;
+            if (node->is_center) {
+                this->centers.push_back(node);
+            }
+        }
+        rebuildCenterContainer();
     };
     ~Controler() {
         delete distancaMatrix;
@@ -45,9 +62,24 @@ class Controler {
             return "Oparation failed\n" + std::string(e.what());
         }
 
+        if (is_center) {
+            (*newNodeToRet)->belongs_to_p_group = this->centers.size();
+            this->centers.push_back(*newNodeToRet);
+        }
+
         return "Node " + name + " added successfully to x " + sx + " y " + sy;
     };
     string deleteNode(int nodeToDelId) {
+        fStar::Node* nodeToDelete = star->getNode(nodeToDelId);
+        if (!nodeToDelete) {
+            return "Could not found node id " + nodeToDelId;
+        }
+
+        if (nodeToDelete->is_center) {
+            this->centers.erase(this->centers.begin() + nodeToDelete->belongs_to_p_group);
+            rebuildCenterContainer();
+        }
+
         this->star->deleteNode(nodeToDelId);
         loader->DestroyNode(nodeToDelId);
         return "Node deleted";
@@ -72,7 +104,23 @@ class Controler {
         nodeToMod->name=newName;
         nodeToMod->x=newX;
         nodeToMod->y=newY;
-        nodeToMod->is_center=is_center;
+
+        if (nodeToMod->is_center != is_center) {
+            nodeToMod->is_center=is_center;
+
+            if (is_center) {
+                nodeToMod->belongs_to_p_group = this->centers.size();
+                this->centers.push_back(nodeToMod);
+            }
+            else {
+                this->centers.erase(this->centers.begin() + nodeToMod->belongs_to_p_group);
+                rebuildCenterContainer();
+                nodeToMod->belongs_to_p_group = fStar::Node::NO_GROUP;
+            }
+        }
+
+
+
 
         return "Sucsessfull updated node " + nodeToMod->name;
     };

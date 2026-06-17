@@ -31,7 +31,7 @@ int main() {
     // }
     for (int i = 0; i < 30; i++) {
         fStar::Node* n = l.MakeNode(to_string(i), 10*i, 20, false);//fStar::Node({float(coordList[i*2]), float(coordList[(i*2)+1]), i, to_string(i+1)});
-        n->belongs_to_p_group = i;
+
     }
 
     FStar fsStar = FStar();
@@ -107,6 +107,12 @@ int main() {
     // //gui g = gui(&fsStar, &t);
     Controler c = Controler(&fsStar, &l);
 
+    string s = c.modifyNode(l[0], "0", "0.0", "20.0", true);
+    s = c.modifyNode(l[1], "1", "10.0", "20.0", true);
+    s = c.modifyNode(l[2], "2", "20.0", "20.0", true);
+    s = c.modifyNode(l[3], "3", "30.0", "20.0", true);
+
+    s = c.deleteNode(2);
     //c.load("../save_test");
     // fStar::Node* n1;
     // c.addNode("6","60","24", &n1);
