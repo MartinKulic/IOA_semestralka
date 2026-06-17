@@ -29,8 +29,15 @@ int main() {
     // for (int i = 0; i < 9; i++) {
     //     fStar::Node* n = l.MakeNode(to_string(i+1), float(coordList[i*2]), float(coordList[(i*2)+1]));//fStar::Node({float(coordList[i*2]), float(coordList[(i*2)+1]), i, to_string(i+1)});
     // }
+    for (int i = 0; i < 30; i++) {
+        fStar::Node* n = l.MakeNode(to_string(i), 10*i, 20, false);//fStar::Node({float(coordList[i*2]), float(coordList[(i*2)+1]), i, to_string(i+1)});
+        n->belongs_to_p_group = i;
+    }
 
     FStar fsStar = FStar();
+    for (int i = 0; i < 30; i++) {
+        fsStar.addNode(l[i]);
+    }
 
     // for (int i = 0; i < 24; i++) {
     //     int id_node_from = edgesList[i*2]-1;
@@ -100,7 +107,7 @@ int main() {
     // //gui g = gui(&fsStar, &t);
     Controler c = Controler(&fsStar, &l);
 
-    c.load("../save_test");
+    //c.load("../save_test");
     // fStar::Node* n1;
     // c.addNode("6","60","24", &n1);
     // fStar::Node* n2 = fsStar.getNode(3);

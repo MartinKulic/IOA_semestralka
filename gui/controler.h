@@ -23,7 +23,7 @@ class Controler {
         delete distancaMatrix;
     }
 
-    string addNode(string name, string sx, string sy, fStar::Node** newNodeToRet) {
+    string addNode(string name, string sx, string sy, bool is_center, fStar::Node** newNodeToRet) {
         float x,y;
         try {
             x = std::stof(sx);
@@ -38,7 +38,7 @@ class Controler {
 
 
         try {
-            fStar::Node* node = loader->MakeNode(name, x, y );
+            fStar::Node* node = loader->MakeNode(name, x, y, is_center );
             star->addNode(node);
             *newNodeToRet = node;
         }catch (const std::exception& e) {
@@ -52,7 +52,7 @@ class Controler {
         loader->DestroyNode(nodeToDelId);
         return "Node deleted";
     };
-    string modifyNode(fStar::Node* nodeToMod, string newName, string snewX, string snewY) {
+    string modifyNode(fStar::Node* nodeToMod, string newName, string snewX, string snewY, bool is_center) {
         if (nodeToMod == nullptr) {           // <-- guard against spurious calls
             return "Why and more likely HOW TF is modifie node called";
         }
@@ -72,6 +72,7 @@ class Controler {
         nodeToMod->name=newName;
         nodeToMod->x=newX;
         nodeToMod->y=newY;
+        nodeToMod->is_center=is_center;
 
         return "Sucsessfull updated node " + nodeToMod->name;
     };
@@ -139,7 +140,6 @@ class Controler {
     }
 
     string save(std::string path) {
-        //TODO: Implement
         try {
             Loader::save(path, star);
         }catch (exception e) {

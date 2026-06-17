@@ -11,7 +11,6 @@
 
 
 void Loader::save(std::filesystem::path path, fStar::FStar* star) {
-    //TODO: Validate path - mkdir -p
     std::filesystem::create_directories(path);
 
     std::filesystem::path starFilePath = path / Loader::STAR_FILE_NAME;
@@ -22,7 +21,7 @@ void Loader::save(std::filesystem::path path, fStar::FStar* star) {
     for (auto nodeIt = star->begin_nodes(); nodeIt != endNodes; ++nodeIt) {
         fStar::Node* node = *nodeIt;
 
-        outStarFile << node->id << " " << node->name << " " << node->x << " " << node->y << "\n";
+        outStarFile << node->id << " " << node->name << " " << node->is_center << " " << node->belongs_to_p_group << " " << node->x << " " << node->y << "\n";
     }
 
     outStarFile << "e\n" << star->sizeEdges() << "\n";
@@ -57,19 +56,23 @@ void Loader::load(std::filesystem::path path, fStar::FStar *star, NodeAllocator 
     while (!inStarFile.eof() && nextChar != 'e') {
         int id;
         string name;
+        bool is_center = false;
+        int belongs_to_p_group;
         float x;
         float y;
 
         inStarFile >> id;
         inStarFile >> name;
+        inStarFile >> is_center;
+        inStarFile >> belongs_to_p_group;
         inStarFile >> x;
         inStarFile >> y;
 
-         fStar::Node* node;
+        fStar::Node* node;
         if (ignoreId) {
-            node = nodeAllocator->MakeNode(name, x, y);
+            node = nodeAllocator->MakeNode(name, x, y, is_center);
         }else {
-            node = nodeAllocator->MakeNode(name, x, y, id);
+            node = nodeAllocator->MakeNode(name, x, y, id, is_center);
         }
 
         star->addNode(node);

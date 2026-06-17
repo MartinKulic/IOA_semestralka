@@ -21,7 +21,7 @@ using namespace fStar;
 
 class gui {
 private:
-    FStar     *fstar;
+    FStar *fstar;
     Controler *controler;
 
     Canvas c;
@@ -30,67 +30,124 @@ private:
 
     const coor graph_text_draw_offset{-4, -6};
 
-    float _canvas_zoom  = 1.0f;
+    float _canvas_zoom = 1.0f;
     float _canvas_pan_x = 10.0f;
     float _canvas_pan_y = -100.0f;
-    bool  is_dragging   = false;
+    bool is_dragging = false;
 
-    int active_tab       = 0;
+    int active_tab = 0;
     int graph_panel_size = 70;
 
     fStar::Node *selected_node = nullptr;
-    int   canvas_mouse_x    = 0;
-    int   canvas_mouse_y    = 0;
+    int canvas_mouse_x = 0;
+    int canvas_mouse_y = 0;
     float last_click_node_x = 0.0f;
     float last_click_node_y = 0.0f;
-    bool  draw_last_click   = true;
+    bool draw_last_click = true;
 
     // Node edit fields – kept in sync by SetSelectedNode()
     std::string edit_name;
     std::string edit_x;
     std::string edit_y;
+    bool edit_is_center;
 
     // Add-node fields – populated from canvas left-click
     std::string add_node_name = "Name";
     std::string add_node_x;
     std::string add_node_y;
+    bool add_node_is_center = false;
 
     // Edge list state.
     // std::deque provides pointer stability on push_back, so raw pointers
     // passed to Input() remain valid for the lifetime of the deque entry.
-    std::deque<std::unique_ptr<std::string>> edge_weight_buffers;
+    std::deque<std::unique_ptr<std::string> > edge_weight_buffers;
     fStar::Node *edge_section_built_for = nullptr; // which node the rows were built for
-    Component    edge_section_container;           // Container::Vertical, rebuilt on demand
+    Component edge_section_container; // Container::Vertical, rebuilt on demand
 
-    std::string  add_edge_weight        = "10";
-    fStar::Node *node_edge_to           = nullptr;
-    bool         is_select_node_to_mode = false;
+    std::string add_edge_weight = "10";
+    fStar::Node *node_edge_to = nullptr;
+    bool is_select_node_to_mode = false;
 
     std::string path_load_from = "../save";
-    std::string path_save_to   = "../save";
-    std::string status_msg     = "Status msg";
+    std::string path_save_to = "../save";
+    std::string status_msg = "Status msg";
 
     int menu_scroll_offset = 0;
 
     // ─────────────────────────────────────────────────────────── drawing ─────
 
+    static constexpr uint8_t kGroupColors[] = {
+        196, // Red1
+        21,  // Blue1
+        201, // Magenta1
+        51,  // Cyan1
+        208, // Orange1
+        93,  // Purple
+        118, // Lime
+        39,  // DeepSkyBlue1
+        198, // DeepPink1
+        214, // Gold1
+
+        160, // Red3
+        27,  // DodgerBlue2
+        129, // MediumPurple
+        45,  // Turquoise2
+        202, // OrangeRed1
+        99,  // MediumPurple1
+        82,  // Chartreuse2
+        33,  // DeepSkyBlue3
+        171, // Orchid
+        220  // Gold2
+    };
+
     void DrawNodes() {
         for (auto it = fstar->begin_nodes(); it != fstar->end_nodes(); ++it) {
-            fStar::Node *n   = *it;
-            coor          cor = transformer->transform(n);
+            fStar::Node *n = *it;
+            coor cor = transformer->transform(n);
             int sx = cor.x * 2 + graph_text_draw_offset.x;
             int sy = cor.y * 2 + graph_text_draw_offset.y;
-            if      (n == selected_node) c.DrawText(sx, sy, "< " + n->name + " >", Color::Green);
-            else if (n == node_edge_to)  c.DrawText(sx, sy, "> " + n->name + " <");
-            else                          c.DrawText(sx, sy, n->name);
+
+            string text = n->name;
+            if (n->is_center) {
+                text = "|"+n->name+"|";
+            }
+            Color col = Color::Default;
+
+            if (n->belongs_to_p_group != fStar::Node::NO_GROUP) {
+                col=GroupToColor(n->belongs_to_p_group);
+            }
+
+            if (n == selected_node)
+                c.DrawText(sx, sy, "< " + text + " >", Color::Green);
+            else if (n == node_edge_to)
+                c.DrawText(sx, sy, "> " + text + " <", Color::Yellow);
+            else
+                c.DrawText(sx, sy, text, col);
         }
+    }
+
+    Color GroupToColor(uint group) {
+
+        if (group < 20) {
+            return static_cast<Color::Palette256>( kGroupColors[group] );
+        }
+        // if (group<10) {
+        //     return static_cast<Color::Palette16>( group+4 );
+        // }
+
+        return static_cast<Color::Palette256>( 17 + ((group * 9) % 214) );
+        // constexpr int palette_size = 216;
+        // constexpr double golden = 0.61803398875;
+        //
+        // int idx = static_cast<int>(group * golden * palette_size) % palette_size;
+        // return static_cast<Color::Palette256>(16 + idx);
     }
 
     void DrawEdges() {
         for (auto it = fstar->begin_edges(); it != fstar->end_edges(); ++it) {
-            fStar::Edge e  = *it;
+            fStar::Edge e = *it;
             coor c1 = transformer->transform(e.from) * 2 + graph_text_draw_offset;
-            coor c2 = transformer->transform(e.to)   * 2 + graph_text_draw_offset;
+            coor c2 = transformer->transform(e.to) * 2 + graph_text_draw_offset;
             c.DrawPointLine(c1.x, c1.y, c2.x, c2.y);
             c.DrawText((c1.x + c2.x) / 2, (c1.y + c2.y) / 2, std::to_string(e.weight));
         }
@@ -102,10 +159,10 @@ private:
         int ty = my * 2 - graph_text_draw_offset.y - 5;
         constexpr int tol = 4;
         for (auto it = fstar->begin_nodes(); it != fstar->end_nodes(); ++it) {
-            fStar::Node *n   = *it;
-            coor          cor = transformer->transform(n);
+            fStar::Node *n = *it;
+            coor cor = transformer->transform(n);
             if (std::abs(cor.x * 2 - tx) <= tol &&
-                std::abs(cor.y     - ty) <= tol)
+                std::abs(cor.y - ty) <= tol)
                 return n;
         }
         return nullptr;
@@ -118,8 +175,9 @@ private:
         selected_node = node;
         if (node) {
             edit_name = node->name;
-            edit_x    = std::to_string(node->x);
-            edit_y    = std::to_string(node->y);
+            edit_x = std::to_string(node->x);
+            edit_y = std::to_string(node->y);
+            edit_is_center = node->is_center;
         } else {
             edit_name.clear();
             edit_x.clear();
@@ -156,10 +214,9 @@ private:
         }
 
         // 3. Build one interactive row per out-edge.
-        for (auto it  = fstar->begin_out_edges(selected_node->id),
-                  end = fstar->end_out_edges(selected_node->id);
-             it != end; ++it)
-        {
+        for (auto it = fstar->begin_out_edges(selected_node->id),
+                     end = fstar->end_out_edges(selected_node->id);
+             it != end; ++it) {
             fStar::Edge edge = *it;
 
             // Buffer lives in the deque; pointer is stable across push_back.
@@ -167,13 +224,13 @@ private:
                 std::make_unique<std::string>(std::to_string(edge.weight)));
             std::string *buf = edge_weight_buffers.back().get();
 
-            auto w_in      = Input(buf, "w");
-            auto del_btn   = Button("Delete", [this, edge] {
-                status_msg             = controler->deleteEdge(edge);
+            auto w_in = Input(buf, "w");
+            auto del_btn = Button("Delete", [this, edge] {
+                status_msg = controler->deleteEdge(edge);
                 edge_section_built_for = nullptr; // request rebuild next frame
             });
             auto apply_btn = Button("Apply", [this, edge, buf] {
-                status_msg             = controler->modifyEdge(edge, *buf);
+                status_msg = controler->modifyEdge(edge, *buf);
                 edge_section_built_for = nullptr;
             });
 
@@ -186,7 +243,7 @@ private:
                         text("]-> " + edge.to->name + " ") | vcenter,
                         filler(),
                         apply_btn->Render() | vcenter,
-                        del_btn->Render()   | color(Color::Red) | vcenter,
+                        del_btn->Render() | color(Color::Red) | vcenter,
                     });
                 });
 
@@ -200,13 +257,13 @@ private:
 
     Component EdgeSectionComponent() {
         auto in_weight = Input(&add_edge_weight, "Weight");
-        auto add_btn   = Button("Add Edge", [&] {
-            status_msg             = controler->addEdge(selected_node, node_edge_to, add_edge_weight);
+        auto add_btn = Button("Add Edge", [&] {
+            status_msg = controler->addEdge(selected_node, node_edge_to, add_edge_weight);
             edge_section_built_for = nullptr;
-            node_edge_to           = nullptr;
+            node_edge_to = nullptr;
             is_select_node_to_mode = false;
         });
-        auto sel_cb   = Checkbox("Select node to", &is_select_node_to_mode);
+        auto sel_cb = Checkbox("Select node to", &is_select_node_to_mode);
         auto calc_btn = Button("Calculate weight", [&] {
             status_msg = controler->calculateEuclideanDistance(
                 selected_node, node_edge_to, &add_edge_weight);
@@ -229,17 +286,18 @@ private:
                 hbox({
                     text(selected_node->name + " -[") | vcenter,
                     in_weight->Render() | size(WIDTH, EQUAL, 9) | vcenter,
-                    text("]-> " + (node_edge_to ? node_edge_to->name
-                                               : std::string("select node to"))) | vcenter,
+                    text("]-> " + (node_edge_to
+                                       ? node_edge_to->name
+                                       : std::string("select node to"))) | vcenter,
                     filler(),
                     (is_select_node_to_mode
-                       ? add_btn->Render() | vcenter | color(Color::BlueLight) | blink
-                       : add_btn->Render() | vcenter | color(Color::BlueLight)),
+                         ? add_btn->Render() | vcenter | color(Color::BlueLight) | blink
+                         : add_btn->Render() | vcenter | color(Color::BlueLight)),
                 }),
                 hbox({
                     calc_btn->Render() | vcenter,
                     filler(),
-                    sel_cb->Render()   | vcenter,
+                    sel_cb->Render() | vcenter,
                 }),
             });
         });
@@ -247,65 +305,69 @@ private:
 
     Component AddNodeComponent() {
         auto name_in = Input(&add_node_name, "Name");
-        auto x_in    = Input(&add_node_x,    "X");
-        auto y_in    = Input(&add_node_y,    "Y");
+        auto x_in = Input(&add_node_x, "X");
+        auto y_in = Input(&add_node_y, "Y");
+        auto is_center_cb = Checkbox( "Center", &this->add_node_is_center);
         auto add_btn = Button("Add New Node", [&] {
             fStar::Node *n = nullptr;
-            status_msg = controler->addNode(add_node_name, add_node_x, add_node_y, &n);
+            status_msg = controler->addNode(add_node_name, add_node_x, add_node_y, add_node_is_center, &n);
             SetSelectedNode(n);
         });
         auto prev_cb = Checkbox("Preview location", &draw_last_click);
 
         return Renderer(
-            Container::Vertical({name_in, x_in, y_in, add_btn, prev_cb}),
-            [name_in, x_in, y_in, add_btn, prev_cb] {
+            Container::Vertical({name_in, x_in, y_in, add_btn, prev_cb, is_center_cb}),
+            [name_in, x_in, y_in, add_btn, prev_cb, is_center_cb] {
                 return vbox({
                     text(" Add Node ") | bold | color(Color::Green),
                     separatorLight(),
                     hbox({text("Name: "), name_in->Render()}),
-                    hbox({text("X: "),    x_in->Render()}),
-                    hbox({text("Y: "),    y_in->Render()}),
-                    prev_cb->Render(),
+                    hbox({text("X: "), x_in->Render()}),
+                    hbox({text("Y: "), y_in->Render()}),
+                    hbox( prev_cb->Render() | dim, filler(), is_center_cb->Render()),
                     add_btn->Render() | color(Color::BlueLight),
                 });
             });
     }
 
     Component NodeInfoComponent() {
-        auto name_in   = Input(&edit_name, "node name");
-        auto x_in      = Input(&edit_x,    "X coord");
-        auto y_in      = Input(&edit_y,    "Y coord");
+        auto name_in = Input(&edit_name, "node name");
+        auto x_in = Input(&edit_x, "X coord");
+        auto y_in = Input(&edit_y, "Y coord");
+        auto is_center_cb = Checkbox( "Center", &this->edit_is_center);
         auto apply_btn = Button("  Apply Node Changes  ", [&] {
-            status_msg = controler->modifyNode(selected_node, edit_name, edit_x, edit_y);
+            status_msg = controler->modifyNode(selected_node, edit_name, edit_x, edit_y, edit_is_center);
         });
-        auto del_btn   = Button("  Delete node  ", [&] {
+        auto del_btn = Button("  Delete node  ", [&] {
             std::string name = selected_node->name;
             fstar->deleteNode(selected_node->id);
             SetSelectedNode(nullptr);
             status_msg = "Deleted node " + name;
         });
-        auto edge_sec  = EdgeSectionComponent();
+        auto edge_sec = EdgeSectionComponent();
 
         return Renderer(
-            Container::Vertical({name_in, x_in, y_in, apply_btn, del_btn, edge_sec}),
-            [&, name_in, x_in, y_in, apply_btn, del_btn, edge_sec] {
+            Container::Vertical({name_in, x_in, y_in, apply_btn, del_btn, edge_sec, is_center_cb}),
+            [&, name_in, x_in, y_in, apply_btn, del_btn, edge_sec, is_center_cb] {
                 coor cor = transformer->transform(selected_node);
                 return vbox({
-                    text(" Edit Node ") | bold | color(Color::Green),
-                    separator(),
-                    text("ID: " + std::to_string(selected_node->id)),
-                    hbox({text("Name : "),  name_in->Render()}),
-                    hbox({text("Pos X : "), x_in->Render()}),
-                    hbox({text("Pos Y : "), y_in->Render()}),
-                    text("Drawn X: " + std::to_string(cor.x)),
-                    text("Drawn Y: " + std::to_string(cor.y)),
-                    separator(),
-                    hbox({apply_btn->Render(), filler(), del_btn->Render() | color(Color::Red)}),
-                    separatorDouble(),
-                    text(" Out Edges ") | bold | color(Color::Green),
-                    separator(),
-                    edge_sec->Render(),
-                }) | border;
+                           text(" Edit Node ") | bold | color(Color::Green),
+                           separator(),
+                           text("ID: " + std::to_string(selected_node->id) + (this->selected_node->is_center ? "  Center" : "" )),
+                           text ("Group: " + (this->selected_node->belongs_to_p_group == fStar::Node::NO_GROUP ? "No group" : std::to_string(this->selected_node->belongs_to_p_group))),
+                           hbox({text("Name : " ), name_in->Render()}),
+                           hbox({text("Pos X : "), x_in->Render()}),
+                           hbox({text("Pos Y : "), y_in->Render()}),
+                           text("Drawn X: " + std::to_string(cor.x)),
+                           text("Drawn Y: " + std::to_string(cor.y)),
+                           hbox(is_center_cb->Render()),
+                           separator(),
+                           hbox({apply_btn->Render(), filler(), del_btn->Render() | color(Color::Red)}),
+                           separatorDouble(),
+                           text(" Out Edges ") | bold | color(Color::Green),
+                           separator(),
+                           edge_sec->Render(),
+                       }) | border;
             });
     }
 
@@ -313,7 +375,7 @@ private:
         auto recalc_btn = Button("Recalculate All Distances", [&] {
             SetSelectedNode(nullptr);
             node_edge_to = nullptr;
-            status_msg   = controler->recalculateAllDistances();
+            status_msg = controler->recalculateAllDistances();
         });
         // Renderer(base, fn) uses base for focus/event routing and fn for
         // rendering only – the minimal wrapper to apply element decorators.
@@ -324,21 +386,25 @@ private:
     }
 
     Component LoadSaveComponent() {
-        auto load_in  = Input(&path_load_from, "path to load from");
+        auto load_in = Input(&path_load_from, "path to load from");
         auto load_btn = Button("Load", [&] { status_msg = controler->load(path_load_from); });
-        auto save_in  = Input(&path_save_to,   "path to save to");
+        auto save_in = Input(&path_save_to, "path to save to");
         auto save_btn = Button("Save", [&] { status_msg = controler->save(path_save_to); });
 
         auto inner = Container::Vertical({load_in, save_in, load_btn, save_btn});
 
         return Collapsible("Load Save",
-            Renderer(inner, [load_in, load_btn, save_in, save_btn] {
-                return vbox({
-                    hbox({load_in->Render(), filler(), load_btn->Render() | color(Color::Orange3)}),
-                    hbox({save_in->Render(), filler(), save_btn->Render() | color(Color::GreenLight)}),
-                }) | color(Color::Default);
-            })
-        ) | color(Color::Green) | borderDashed | color(Color::CyanLight);
+                           Renderer(inner, [load_in, load_btn, save_in, save_btn] {
+                               return vbox({
+                                          hbox({
+                                              load_in->Render(), filler(), load_btn->Render() | color(Color::Orange3)
+                                          }),
+                                          hbox({
+                                              save_in->Render(), filler(), save_btn->Render() | color(Color::GreenLight)
+                                          }),
+                                      }) | color(Color::Default);
+                           })
+               ) | color(Color::Green) | borderDashed | color(Color::CyanLight);
     }
 
     Component GraphComponent() {
@@ -356,16 +422,16 @@ private:
             }
 
             return vbox({
-                canvas(&c) | flex,
-                separator(),
-                text("Zoom: "     + std::to_string(_canvas_zoom).substr(0, 4)         +
-                     " | PanX: "  + std::to_string(static_cast<int>(_canvas_pan_x))   +
-                     " | PanY: "  + std::to_string(static_cast<int>(_canvas_pan_y))   +
-                     " | ClickX: "+ std::to_string(last_click_node_x)                 +
-                     " | ClickY: "+ std::to_string(last_click_node_y)                 +
-                     " | ToMode: "+ (is_select_node_to_mode ? "Y" : "N"))
-                    | color(Color::Yellow),
-            }) | border;
+                       canvas(&c) | flex,
+                       separator(),
+                       text("Zoom: " + std::to_string(_canvas_zoom).substr(0, 4) +
+                            " | PanX: " + std::to_string(static_cast<int>(_canvas_pan_x)) +
+                            " | PanY: " + std::to_string(static_cast<int>(_canvas_pan_y)) +
+                            " | ClickX: " + std::to_string(last_click_node_x) +
+                            " | ClickY: " + std::to_string(last_click_node_y) +
+                            " | ToMode: " + (is_select_node_to_mode ? "Y" : "N"))
+                       | color(Color::Yellow),
+                   }) | border;
         });
 
         return CatchEvent(graph_rndr, [&](Event event) -> bool {
@@ -373,8 +439,8 @@ private:
             auto &m = event.mouse();
             if (m.x >= graph_panel_size) return false;
 
-            int prev_x     = canvas_mouse_x;
-            int prev_y     = canvas_mouse_y;
+            int prev_x = canvas_mouse_x;
+            int prev_y = canvas_mouse_y;
             canvas_mouse_x = m.x - 1;
             canvas_mouse_y = m.y - 1;
 
@@ -389,7 +455,7 @@ private:
             if (m.button == Mouse::Left && m.motion == Mouse::Pressed) {
                 fStar::Node *hit = FindClickedNode(canvas_mouse_x, canvas_mouse_y);
                 if (is_select_node_to_mode) node_edge_to = hit;
-                else                       SetSelectedNode(hit);
+                else SetSelectedNode(hit);
 
                 coor wp = rTransformer->reverseTransform({float(m.x), float(m.y * 2)});
                 last_click_node_x = wp.x;
@@ -399,8 +465,14 @@ private:
                 return hit != nullptr;
             }
             if (m.button == Mouse::Right) {
-                if (m.motion == Mouse::Pressed)  { is_dragging = true;  return true; }
-                if (m.motion == Mouse::Released) { is_dragging = false; return true; }
+                if (m.motion == Mouse::Pressed) {
+                    is_dragging = true;
+                    return true;
+                }
+                if (m.motion == Mouse::Released) {
+                    is_dragging = false;
+                    return true;
+                }
             }
             if (m.motion == Mouse::Moved && is_dragging) {
                 _canvas_pan_x += canvas_mouse_x - prev_x;
@@ -418,18 +490,18 @@ private:
         auto no_sel_help = Maybe(
             Renderer([] {
                 return vbox({
-                    text(" MENU ") | bold,
-                    separator(),
-                    text("Click on node to select."),
-                }) | border;
+                           text(" MENU ") | bold,
+                           separator(),
+                           text("Click on node to select."),
+                       }) | border;
             }),
             [&] { return selected_node == nullptr; });
 
         auto node_info_maybe = Maybe(NodeInfoComponent(),
                                      [&] { return selected_node != nullptr; });
 
-        auto add_node_section  = AddNodeComponent();
-        auto danger_section    = DangerOperationsComponent();
+        auto add_node_section = AddNodeComponent();
+        auto danger_section = DangerOperationsComponent();
         auto load_save_section = LoadSaveComponent();
 
         auto container = Container::Vertical({
@@ -441,47 +513,64 @@ private:
         // that must scroll independently of keyboard focus.  vscroll_indicator
         // renders a proportional scroll bar alongside the clipped content.
         auto menu_rndr = Renderer(container,
-            [&, no_sel_help, node_info_maybe,
-               add_node_section, danger_section, load_save_section]
-        {
-            Elements lines;
-            lines.push_back(no_sel_help->Render());
-            lines.push_back(node_info_maybe->Render());
-            lines.push_back(separator());
-            lines.push_back(add_node_section->Render()  | border);
-            lines.push_back(separator());
-            lines.push_back(danger_section->Render());
-            lines.push_back(separator());
-            lines.push_back(load_save_section->Render());
-            if (!status_msg.empty()) {
-                lines.push_back(separator());
-                lines.push_back(text(status_msg) | color(Color::Yellow));
-            }
-            lines.push_back(separator());
-            lines.push_back(text("[Home] exit ToMode | [Alt+S] toggle ToMode") | dim);
-            lines.push_back(text("[PgUp/PgDn] or scroll to scroll menu")        | dim);
-            lines.push_back(text("[Alt+R] reset scroll")                         | dim);
+                                  [&, no_sel_help, node_info_maybe,
+                                      add_node_section, danger_section, load_save_section] {
+                                      Elements lines;
+                                      lines.push_back(no_sel_help->Render());
+                                      lines.push_back(node_info_maybe->Render());
+                                      lines.push_back(separator());
+                                      lines.push_back(add_node_section->Render() | border);
+                                      lines.push_back(separator());
+                                      lines.push_back(danger_section->Render());
+                                      lines.push_back(separator());
+                                      lines.push_back(load_save_section->Render());
+                                      if (!status_msg.empty()) {
+                                          lines.push_back(separator());
+                                          lines.push_back(text(status_msg) | color(Color::Yellow));
+                                      }
+                                      lines.push_back(separator());
+                                      lines.push_back(text("[Home] exit ToMode | [Alt+S] toggle ToMode") | dim);
+                                      lines.push_back(text("[PgUp/PgDn] or scroll to scroll menu") | dim);
+                                      lines.push_back(text("[Alt+R] reset scroll") | dim);
 
-            return vbox(std::move(lines))
-                   | focusPosition(0, menu_scroll_offset)
-                   | yframe
-                   | vscroll_indicator
-                   | size(HEIGHT, EQUAL, Terminal::Size().dimy);
-        });
+                                      return vbox(std::move(lines))
+                                             | focusPosition(0, menu_scroll_offset)
+                                             | yframe
+                                             | vscroll_indicator
+                                             | size(HEIGHT, EQUAL, Terminal::Size().dimy);
+                                  });
 
         return CatchEvent(menu_rndr, [&](Event event) -> bool {
             const int step = 3;
             const int page = std::max(1, Terminal::Size().dimy / 2);
 
-            if (event == Event::ArrowDown) { menu_scroll_offset += step;                            return true; }
-            if (event == Event::ArrowUp)   { menu_scroll_offset  = std::max(0, menu_scroll_offset - step); return true; }
-            if (event == Event::PageDown)  { menu_scroll_offset += page;                            return true; }
-            if (event == Event::PageUp)    { menu_scroll_offset  = std::max(0, menu_scroll_offset - page); return true; }
+            if (event == Event::ArrowDown) {
+                menu_scroll_offset += step;
+                return true;
+            }
+            if (event == Event::ArrowUp) {
+                menu_scroll_offset = std::max(0, menu_scroll_offset - step);
+                return true;
+            }
+            if (event == Event::PageDown) {
+                menu_scroll_offset += page;
+                return true;
+            }
+            if (event == Event::PageUp) {
+                menu_scroll_offset = std::max(0, menu_scroll_offset - page);
+                return true;
+            }
 
             if (event.is_mouse() && event.mouse().x > graph_panel_size) {
                 auto &m = event.mouse();
-                if (m.button == Mouse::WheelDown) { menu_scroll_offset += step;                            return true; }
-                if (m.button == Mouse::WheelUp)   { menu_scroll_offset  = std::max(0, menu_scroll_offset - step); return true; }
+                if (m.button == Mouse::WheelDown) {
+                    menu_scroll_offset += step;
+                    return true;
+                }
+                if (m.button == Mouse::WheelUp) {
+                    menu_scroll_offset = std::max(0, menu_scroll_offset - step);
+                    return true;
+                }
             }
             return false;
         });
@@ -491,13 +580,13 @@ private:
         return Renderer([&] {
             if (!controler->D())
                 return vbox({
-                    text(" Distance Matrix ") | bold | color(Color::Cyan),
-                    separator(),
-                    text("No matrix available."),
-                }) | border;
+                           text(" Distance Matrix ") | bold | color(Color::Cyan),
+                           separator(),
+                           text("No matrix available."),
+                       }) | border;
 
             auto end = fstar->end_nodes();
-            std::vector<std::vector<std::string>> data;
+            std::vector<std::vector<std::string> > data;
 
             // Header row (first cell blank)
             {
@@ -514,35 +603,34 @@ private:
             }
 
             auto tbl = ftxui::Table(data);
-            tbl.SelectAll()         .Border(LIGHT);
-            tbl.SelectRows(0, -1)   .SeparatorVertical(LIGHT);
+            tbl.SelectAll().Border(LIGHT);
+            tbl.SelectRows(0, -1).SeparatorVertical(LIGHT);
             tbl.SelectColumns(0, -1).SeparatorHorizontal(LIGHT);
-            tbl.SelectRow(0)        .Decorate(bold);
-            tbl.SelectRow(0)        .Border(HEAVY);
-            tbl.SelectRow(0)        .DecorateCells(center);
-            tbl.SelectColumn(0)     .Decorate(bold);
-            tbl.SelectColumn(0)     .Border(HEAVY);
-            tbl.SelectColumn(0)     .DecorateCells(center);
+            tbl.SelectRow(0).Decorate(bold);
+            tbl.SelectRow(0).Border(HEAVY);
+            tbl.SelectRow(0).DecorateCells(center);
+            tbl.SelectColumn(0).Decorate(bold);
+            tbl.SelectColumn(0).Border(HEAVY);
+            tbl.SelectColumn(0).DecorateCells(center);
 
             return vbox({
-                text(" Distance Matrix ") | bold | color(Color::Cyan),
-                separator(),
-                tbl.Render(),
-            }) | border | flex;
+                       text(" Distance Matrix ") | bold | color(Color::Cyan),
+                       separator(),
+                       tbl.Render(),
+                   }) | border | flex;
         });
     }
 
 public:
     gui(FStar *fstar, Controler *controler)
         : fstar(fstar)
-        , controler(controler)
-        , transformer(std::make_unique<Transformer>())
-        , rTransformer(std::make_unique<Transformer>())
-        , edge_section_container(Container::Vertical({}))
-    {
-        *transformer  += Transformer::Scale(&_canvas_zoom);
-        *transformer  += Transformer::Move(&_canvas_pan_x, &_canvas_pan_y);
-        *transformer  += Transformer::FlipY(0.0);
+          , controler(controler)
+          , transformer(std::make_unique<Transformer>())
+          , rTransformer(std::make_unique<Transformer>())
+          , edge_section_container(Container::Vertical({})) {
+        *transformer += Transformer::Scale(&_canvas_zoom);
+        *transformer += Transformer::Move(&_canvas_pan_x, &_canvas_pan_y);
+        *transformer += Transformer::FlipY(0.0);
 
         *rTransformer += Transformer::rScale(&_canvas_zoom);
         *rTransformer += Transformer::rMove(&_canvas_pan_x, &_canvas_pan_y);
@@ -553,7 +641,7 @@ public:
         auto screen = ScreenInteractive::Fullscreen();
 
         std::vector<std::string> tab_labels = {" Graph ", " Distance Matrix "};
-        auto tab_toggle  = Toggle(&tab_labels, &active_tab);
+        auto tab_toggle = Toggle(&tab_labels, &active_tab);
         auto tab_content = Container::Tab({GraphComponent(), MatrixComponent()}, &active_tab);
 
         auto left = Renderer(
@@ -573,9 +661,18 @@ public:
         });
 
         auto main = CatchEvent(tinted, [&](Event event) -> bool {
-            if (event == Event::AltS) { is_select_node_to_mode = !is_select_node_to_mode; return true; }
-            if (event == Event::Home) { is_select_node_to_mode  = false;                  return true; }
-            if (event == Event::AltR) { menu_scroll_offset      = 0;                      return true; }
+            if (event == Event::AltS) {
+                is_select_node_to_mode = !is_select_node_to_mode;
+                return true;
+            }
+            if (event == Event::Home) {
+                is_select_node_to_mode = false;
+                return true;
+            }
+            if (event == Event::AltR) {
+                menu_scroll_offset = 0;
+                return true;
+            }
             return false;
         });
 
