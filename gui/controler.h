@@ -210,6 +210,16 @@ private:
         return "Loaded";
     }
 
+    string rcalcucateDistanceMatrix() {
+        // TODO: Implement
+        return "Not implemented yet";
+    }
+
+    string runAlgorithm(string p, string temperature, string cooling) {
+        // TODO: Implement
+        return "Not implemented yet";
+    }
+
     fStar::FStar* getFStar() {
         return this->star;
     };

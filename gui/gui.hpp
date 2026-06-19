@@ -68,6 +68,10 @@ private:
     fStar::Node *node_edge_to = nullptr;
     bool is_select_node_to_mode = false;
 
+    std::string p = "4";
+    std::string temperature = "100";
+    std::string cooling = "50";
+
     std::string path_load_from = "../save";
     std::string path_save_to = "../save";
     std::string status_msg = "Status msg";
@@ -281,8 +285,8 @@ private:
             return vbox({
                 edge_section_container->Render(),
                 separatorDouble(),
-                text("Add Edge") | color(Color::Green),
-                separator(),
+                text(" Add Edge") | bold | color(Color::Green),
+                separatorLight(),
                 hbox({
                     text(selected_node->name + " -[") | vcenter,
                     in_weight->Render() | size(WIDTH, EQUAL, 9) | vcenter,
@@ -371,6 +375,39 @@ private:
             });
     }
 
+    Component AlgorithmParametersComponent() {
+        auto p_in = Input(&p, "Number of centers");
+        auto temperature_in = Input(&p, "Temperature");
+        auto cooling_in = Input(&cooling, "Cooling");
+
+        auto recalculate_matrix_btn = Button("Recalculate Matrix", [&] {
+            string response = controler->rcalcucateDistanceMatrix();
+            this->status_msg = response;
+        });
+        auto run_algoritm_btn = Button("Run Algorithm", [&] {
+            string response = controler->runAlgorithm(p, temperature, cooling);
+            this->status_msg = response;
+        });
+
+        auto inner = Container::Vertical({p_in, temperature_in, cooling_in, recalculate_matrix_btn, run_algoritm_btn});
+
+        return Renderer(inner, [&, p_in, temperature_in, cooling_in, recalculate_matrix_btn, run_algoritm_btn] {
+            Elements lines;
+            lines.push_back(text(" ALGORITHM") | bold | color(Color::GreenYellow));
+            lines.push_back(separatorLight());
+            lines.push_back(hbox(text("Number of Centers: "), p_in->Render()));
+            lines.push_back(hbox(text("Temperature: "), temperature_in->Render()));
+            lines.push_back(hbox(text("Cooling: "), cooling_in->Render()));
+            lines.push_back(hbox(
+                recalculate_matrix_btn->Render() | color(Color::CadetBlue),
+                filler(),
+                run_algoritm_btn->Render() | color(Color::GreenYellow))
+            );
+
+            return vbox(std::move(lines)) | border;
+        });
+    }
+
     Component DangerOperationsComponent() {
         auto recalc_btn = Button("Recalculate All Distances", [&] {
             SetSelectedNode(nullptr);
@@ -387,9 +424,13 @@ private:
 
     Component LoadSaveComponent() {
         auto load_in = Input(&path_load_from, "path to load from");
-        auto load_btn = Button("Load", [&] { status_msg = controler->load(path_load_from); });
+        auto load_btn = Button("Load", [&] {
+            status_msg = controler->load(path_load_from);
+        });
         auto save_in = Input(&path_save_to, "path to save to");
-        auto save_btn = Button("Save", [&] { status_msg = controler->save(path_save_to); });
+        auto save_btn = Button("Save", [&] {
+            status_msg = controler->save(path_save_to);
+        });
 
         auto inner = Container::Vertical({load_in, save_in, load_btn, save_btn});
 
@@ -501,12 +542,13 @@ private:
                                      [&] { return selected_node != nullptr; });
 
         auto add_node_section = AddNodeComponent();
+        auto alorithm_section = AlgorithmParametersComponent();
         auto danger_section = DangerOperationsComponent();
         auto load_save_section = LoadSaveComponent();
 
         auto container = Container::Vertical({
             no_sel_help, node_info_maybe,
-            add_node_section, danger_section, load_save_section,
+            add_node_section, alorithm_section, danger_section, load_save_section,
         });
 
         // focusPosition + yframe is the correct FTXUI primitive for a panel
@@ -514,12 +556,14 @@ private:
         // renders a proportional scroll bar alongside the clipped content.
         auto menu_rndr = Renderer(container,
                                   [&, no_sel_help, node_info_maybe,
-                                      add_node_section, danger_section, load_save_section] {
+                                      add_node_section, alorithm_section, danger_section, load_save_section] {
                                       Elements lines;
                                       lines.push_back(no_sel_help->Render());
                                       lines.push_back(node_info_maybe->Render());
                                       lines.push_back(separator());
                                       lines.push_back(add_node_section->Render() | border);
+                                      lines.push_back(separator());
+                                      lines.push_back(alorithm_section->Render());
                                       lines.push_back(separator());
                                       lines.push_back(danger_section->Render());
                                       lines.push_back(separator());
