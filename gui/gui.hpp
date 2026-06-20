@@ -385,14 +385,18 @@ private:
             this->active_tab = 1;
             this->status_msg = response;
         });
+        auto clear_solution_btn = Button("Clear Solution", [&] {
+            string respons = this->controler->clearResult();
+            this->status_msg = respons;
+        });
         auto run_algoritm_btn = Button("Run Algorithm", [&] {
             string response = controler->runAlgorithm(p, temperature, cooling);
             this->status_msg = response;
         });
 
-        auto inner = Container::Vertical({p_in, temperature_in, cooling_in, recalculate_matrix_btn, run_algoritm_btn});
+        auto inner = Container::Vertical({p_in, temperature_in, cooling_in, recalculate_matrix_btn, clear_solution_btn, run_algoritm_btn});
 
-        return Renderer(inner, [&, p_in, temperature_in, cooling_in, recalculate_matrix_btn, run_algoritm_btn] {
+        return Renderer(inner, [&, p_in, temperature_in, cooling_in, recalculate_matrix_btn, clear_solution_btn, run_algoritm_btn] {
             Elements lines;
             lines.push_back(text(" ALGORITHM") | bold | color(Color::GreenYellow));
             lines.push_back(separatorLight());
@@ -401,6 +405,8 @@ private:
             lines.push_back(hbox(text("Cooling: "), cooling_in->Render()));
             lines.push_back(hbox(
                 recalculate_matrix_btn->Render() | color(Color::CadetBlue),
+                filler(),
+                clear_solution_btn->Render() | dim,
                 filler(),
                 run_algoritm_btn->Render() | color(Color::GreenYellow))
             );

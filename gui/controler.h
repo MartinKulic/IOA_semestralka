@@ -20,6 +20,7 @@ private:
     void rebuildCenterContainer() {
         for (int i = 0; i < this->centers.size(); i++) {
             (this->centers[i])->belongs_to_p_group = i;
+            this->centers[i]->is_center = true; // just in case - clearResult expects this
         }
     }
 
@@ -219,6 +220,22 @@ private:
     string runAlgorithm(string p, string temperature, string cooling) {
         // TODO: Implement
         return "Not implemented yet";
+    }
+
+    string clearResult() {
+        auto endNodeIt = star->end_nodes();
+        for (auto nodeIt = star->begin_nodes(); nodeIt != endNodeIt; ++nodeIt) {
+            fStar::Node* node = *nodeIt;
+
+            // if (!node->is_center) {
+            //     node->belongs_to_p_group = fStar::Node::NO_GROUP;
+            // }
+            node->belongs_to_p_group = fStar::Node::NO_GROUP;
+        }
+
+        this->rebuildCenterContainer();
+
+        return "Result cleared";
     }
 
     fStar::FStar* getFStar() {
