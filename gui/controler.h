@@ -211,8 +211,9 @@ private:
     }
 
     string rcalcucateDistanceMatrix() {
-        // TODO: Implement
-        return "Not implemented yet";
+        delete(this->distancaMatrix);
+        this->distancaMatrix = new DistanceMatrix(this->star);
+        return "Matrix recalculated";
     }
 
     string runAlgorithm(string p, string temperature, string cooling) {

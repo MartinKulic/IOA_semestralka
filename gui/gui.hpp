@@ -382,6 +382,7 @@ private:
 
         auto recalculate_matrix_btn = Button("Recalculate Matrix", [&] {
             string response = controler->rcalcucateDistanceMatrix();
+            this->active_tab = 1;
             this->status_msg = response;
         });
         auto run_algoritm_btn = Button("Run Algorithm", [&] {
