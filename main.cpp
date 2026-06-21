@@ -5,7 +5,7 @@
 #include <iostream>
 #include <cmath>
 
-#include "fStar/Alg.hpp"
+#include "fStar/Alg/DistanceMatrix.hpp"
 #include "fStar/fStar.hpp"
 #include "gui/gui.hpp"
 
@@ -122,6 +122,7 @@ int main() {
     // c.addEdge(n1, n2, "20");
     //c.deleteNode(3);
     //c.save("../save_test");
+
 
     gui g = gui(&fsStar, &c);
     g.run();

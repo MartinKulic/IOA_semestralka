@@ -12,15 +12,20 @@ add_executable(IOA_semestralka
         fStar/fStar.hpp
         gui/gui.cpp
         gui/gui.hpp
-        fStar/Alg.cpp
-        fStar/Alg.hpp
+        fStar/Alg/DistanceMatrix.cpp
+        fStar/Alg/DistanceMatrix.hpp
         gui/Transformer.cpp
         gui/Transformer.hpp
         fStar/NodeAllocator.cpp
         fStar/NodeAllocator.hpp
         gui/controler.h
         fStar/Loader.cpp
-        fStar/Loader.hpp)
+        fStar/Loader.hpp
+        fStar/Alg/SumulatedAnnealing.cpp
+        fStar/Alg/SumulatedAnnealing.hpp
+        fStar/Alg/SumulatedAnnealing.hpp
+        fStar/Alg/SumulatedAnnealing.hpp
+        fStar/Alg/SumulatedAnnealing.hpp)
 
 #add_executable(main main.cpp)
 target_link_libraries(IOA_semestralka

@@ -13,7 +13,7 @@
 
 #include "controler.h"
 #include "Transformer.hpp"
-#include "../fStar/Alg.hpp"
+#include "../fStar/Alg/DistanceMatrix.hpp"
 #include "../fStar/fStar.hpp"
 
 using namespace ftxui;

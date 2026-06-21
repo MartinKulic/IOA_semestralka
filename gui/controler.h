@@ -6,8 +6,10 @@
 #define IOA_SEMESTRALKA_CONTROLER_H
 #include "../fStar/fStar.hpp"
 #include  "../fStar/NodeAllocator.hpp"
-#include "../fStar/Alg.hpp"
+#include "../fStar/Alg/DistanceMatrix.hpp"
 #include "../fStar/Loader.hpp"
+
+using namespace Alg;
 
 class Controler {
     private:
@@ -191,7 +193,7 @@ private:
     string save(std::string path) {
         try {
             Loader::save(path, star);
-        }catch (exception e) {
+        }catch (const exception& e) {
             return e.what();
         }
 
@@ -201,7 +203,7 @@ private:
     string load(std::string path,  bool ignoreId = false) {
         try {
             Loader::load(path, star, loader, ignoreId);
-        }catch (exception e) {
+        }catch (const exception& e) {
             return e.what();
         }
 
