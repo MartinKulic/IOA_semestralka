@@ -62,6 +62,9 @@ namespace Alg {
 
         void Run();
         float GetSolution() {
+            for (int i = 0; i < this->included.size(); i++) { // just in case
+                this->included.at(i) = bestSolution[i];
+            }
             CalculateFx();
             return bestFx;
         };
