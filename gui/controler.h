@@ -4,6 +4,8 @@
 
 #ifndef IOA_SEMESTRALKA_CONTROLER_H
 #define IOA_SEMESTRALKA_CONTROLER_H
+#include <cmath>
+
 #include "../fStar/fStar.hpp"
 #include  "../fStar/NodeAllocator.hpp"
 #include "../fStar/Alg/DistanceMatrix.hpp"
@@ -24,6 +26,21 @@ private:
             (this->centers[i])->belongs_to_p_group = i;
             this->centers[i]->is_center = true; // just in case - clearResult expects this
         }
+    }
+
+    float strToWeight(string sWeight) {
+        float weight;
+        try {
+            weight = std::stof(sWeight);
+        }catch (...) {
+            throw std::invalid_argument( "Error while parsing weight " + sWeight );
+        }
+
+        if (weight < 0.0) {
+            throw std::invalid_argument( "Weight needs to be positive number not " + sWeight );
+        }
+
+        return weight;
     }
 
     public:
@@ -135,9 +152,9 @@ private:
 
         float weight;
         try {
-            weight = std::stof(sWeight);
-        }catch (...) {
-            return "Error while parsing weight " + sWeight;
+            weight = strToWeight(sWeight);
+        }catch (const exception& e) {
+            return e.what();
         }
 
         star->addEdge(from, to, weight);
@@ -151,9 +168,9 @@ private:
     string modifyEdge(fStar::Edge edge, string newWeoght) {
         float newWeight;
         try {
-            newWeight = std::stof(newWeoght);
-        }catch (...) {
-            return "Error while parsing weight " + newWeoght;
+            newWeight = strToWeight(newWeoght);
+        }catch (const exception& e) {
+            return e.what();
         }
 
         star->modifieEdge(edge.from->id, edge.to->id, newWeight);
@@ -165,7 +182,7 @@ private:
         if (!from || !to) {
             return -1.f;
         }
-        return sqrtf(pow(to->x - from->x,2)+pow(to->y - from->y, 2));
+        return sqrt(pow(to->x - from->x,2)+pow(to->y - from->y, 2));
     }
     string calculateEuclideanDistance(fStar::Node* from, fStar::Node* to, string* dest) {
         if (!from || !to) {
@@ -243,7 +260,7 @@ private:
     fStar::FStar* getFStar() {
         return this->star;
     };
-    DistanceMatrix* D() {
+    DistanceMatrix* D() const {
         return this->distancaMatrix;
     }
 
