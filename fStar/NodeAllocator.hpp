@@ -23,26 +23,26 @@ public:
         }
     };
 
-    fStar::Node* MakeNode(std::string name, float x, float y, bool is_center) {
+    fStar::Node* MakeNode(std::string name, float x, float y, bool is_center, uint grup  = fStar::Node::NO_GROUP) {
         fStar::Node* node = new fStar::Node;
         node->name=name;
         node->x=x;
         node->y=y;
         node->id=nextID++;
         node->is_center = is_center;
-        node->belongs_to_p_group = fStar::Node::NO_GROUP;
+        node->belongs_to_p_group = grup;
         allocatedNodes[node->id] = node;
 
         return node;
     }
-    fStar::Node* MakeNode(std::string name, float x, float y, int id, bool is_center) {
+    fStar::Node* MakeNode(std::string name, float x, float y, int id, bool is_center, uint grup  = fStar::Node::NO_GROUP) {
         fStar::Node* node = new fStar::Node;
         node->name=name;
         node->x=x;
         node->y=y;
         node->id=id;
         node->is_center = is_center;
-        node->belongs_to_p_group = fStar::Node::NO_GROUP;
+        node->belongs_to_p_group = grup;
         allocatedNodes[node->id] = node;
 
         this->nextID = max(this->nextID, id+1);

@@ -29,100 +29,24 @@ int main() {
     // for (int i = 0; i < 9; i++) {
     //     fStar::Node* n = l.MakeNode(to_string(i+1), float(coordList[i*2]), float(coordList[(i*2)+1]));//fStar::Node({float(coordList[i*2]), float(coordList[(i*2)+1]), i, to_string(i+1)});
     // }
-    for (int i = 0; i < 30; i++) {
-        fStar::Node* n = l.MakeNode(to_string(i), 10*i, 20, false);//fStar::Node({float(coordList[i*2]), float(coordList[(i*2)+1]), i, to_string(i+1)});
-
-    }
+    // for (int i = 0; i < 30; i++) {
+    //     fStar::Node* n = l.MakeNode(to_string(i), 10*i, 20, false);//fStar::Node({float(coordList[i*2]), float(coordList[(i*2)+1]), i, to_string(i+1)});
+    //
+    // }
 
     FStar fsStar = FStar();
-    for (int i = 0; i < 30; i++) {
-        fsStar.addNode(l[i]);
-    }
-
-    // for (int i = 0; i < 24; i++) {
-    //     int id_node_from = edgesList[i*2]-1;
-    //     int id_node_to = edgesList[(i*2)+1]-1;
-    //     fStar::Node* node_from = l[id_node_from];
-    //     fStar::Node* node_to = l[id_node_to];
-    //
-    //     float weight =  sqrt(pow(node_to->x - node_from->x, 2) + pow(node_to->y - node_from->y ,  2));
-    //
-    //     fsStar.addEdge(node_from, node_to, weight, true);
+    // for (int i = 0; i < 30; i++) {
+    //     fsStar.addNode(l[i]);
     // }
 
 
-    cout << "good?" << endl;
-
-    // FStarIterator::NodeIterator start = fsStar.begin_nodes();
-    // FStarIterator::NodeIterator end = fsStar.end_nodes();
-    //
-    // cout << "Node iterator" << endl;
-    // for (FStarIterator::NodeIterator it = start; it != end; ++it) {
-    //     cout << (*it)->name << "\n";
-    // }
-    // cout << endl;
-    //
-    // cout << "Edges iterator" << endl;
-    // for (FStarIterator::EdgeIterator it = fsStar.begin_edges(); it != fsStar.end_edges(); ++it) {
-    //     cout << (*it).from->name << " --[" << (*it).weight << "]-> " << (*it).to->name << "\n";
-    // }
-    //
-    // // cout << "out edges iterator" <<endl;
-    // // for (FStarIterator::OutEdgeIterator it = fsStar.begin_out_edges(7); it != fsStar.end_out_edges(7); ++it) {
-    // //     cout << (*it).from->name << " --[" << (*it).weight << "]-> " << (*it).to->name << "\n";
-    // // }
-    //
-    // cout << "Num of nodes: " << fsStar.sizeNodes() << "\nNum of edges: " << fsStar.sizeEdges() << "\n";
-    //
-    // // fsStar.deleteNode(2);
-    // //
-    // // cout << "Node iterator" << endl;
-    // // for (FStarIterator::NodeIterator it = start; it != end; ++it) {
-    // //     cout << (*it)->name << "\n";
-    // // }
-    // // cout << endl;
-    // //
-    // // cout << "Edges iterator" << endl;
-    // // for (FStarIterator::EdgeIterator it = fsStar.begin_edges(); it != fsStar.end_edges(); ++it) {
-    // //     cout << (*it).from->name << " --[" << (*it).weight << "]-> " << (*it).to->name << "\n";
-    // // }
-    // // cout << "Num of nodes: " << fsStar.sizeNodes() << "\nNum of edges: " << fsStar.sizeEdges() << "\n";
-    // //
-    // // fsStar.deleteNode(3);
-    // // cout << "Node iterator" << endl;
-    // // for (FStarIterator::NodeIterator it = start; it != end; ++it) {
-    // //     cout << (*it)->name << "\n";
-    // // }
-    // // cout << endl;
-    // //
-    // // cout << "Edges iterator" << endl;
-    // // for (FStarIterator::EdgeIterator it = fsStar.begin_edges(); it != fsStar.end_edges(); ++it) {
-    // //     cout << (*it).from->name << " --[" << (*it).weight << "]-> " << (*it).to->name << "\n";
-    // // }
-    // // cout << "Num of nodes: " << fsStar.sizeNodes() << "\nNum of edges: " << fsStar.sizeEdges() << "\n";
-    //
-    // //float height = 100;
-    // //t+=Transformer::FlipY(&height);
-    // //
-    // //gui g = gui(&fsStar, &t);
     Controler c = Controler(&fsStar, &l);
 
-    string s = c.modifyNode(l[0], "0", "0.0", "20.0", true);
-    s = c.modifyNode(l[1], "1", "10.0", "20.0", true);
-    s = c.modifyNode(l[2], "2", "20.0", "20.0", true);
-    s = c.modifyNode(l[3], "3", "30.0", "20.0", true);
+    c.load("../save2");
+    c.clearResult();
 
-    s = c.deleteNode(2);
-    //c.load("../save_test");
-    // fStar::Node* n1;
-    // c.addNode("6","60","24", &n1);
-    // fStar::Node* n2 = fsStar.getNode(3);
-    //
-    // c.addEdge(n1, n2, "10");
-    // c.addEdge(n1, n2, "20");
-    //c.deleteNode(3);
-    //c.save("../save_test");
-
+    c.runAlgorithm("1", "10", "1");
+    c.runAlgorithm("2", "10", "1");
 
     gui g = gui(&fsStar, &c);
     g.run();

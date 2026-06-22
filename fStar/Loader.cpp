@@ -57,7 +57,7 @@ void Loader::load(std::filesystem::path path, fStar::FStar *star, NodeAllocator 
         int id;
         string name;
         bool is_center = false;
-        int belongs_to_p_group;
+        uint belongs_to_p_group;
         float x;
         float y;
 
@@ -70,9 +70,9 @@ void Loader::load(std::filesystem::path path, fStar::FStar *star, NodeAllocator 
 
         fStar::Node* node;
         if (ignoreId) {
-            node = nodeAllocator->MakeNode(name, x, y, is_center);
+            node = nodeAllocator->MakeNode(name, x, y, is_center, belongs_to_p_group);
         }else {
-            node = nodeAllocator->MakeNode(name, x, y, id, is_center);
+            node = nodeAllocator->MakeNode(name, x, y, id, is_center, belongs_to_p_group);
         }
 
         star->addNode(node);

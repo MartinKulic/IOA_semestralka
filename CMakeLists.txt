@@ -21,11 +21,11 @@ add_executable(IOA_semestralka
         gui/controler.h
         fStar/Loader.cpp
         fStar/Loader.hpp
-        fStar/Alg/SumulatedAnnealing.cpp
-        fStar/Alg/SumulatedAnnealing.hpp
-        fStar/Alg/SumulatedAnnealing.hpp
-        fStar/Alg/SumulatedAnnealing.hpp
-        fStar/Alg/SumulatedAnnealing.hpp)
+        fStar/Alg/SimulatedAnnealing.cpp
+        fStar/Alg/SimulatedAnnealing.hpp
+        fStar/Alg/SimulatedAnnealing.hpp
+        fStar/Alg/SimulatedAnnealing.hpp
+        fStar/Alg/SimulatedAnnealing.hpp)
 
 #add_executable(main main.cpp)
 target_link_libraries(IOA_semestralka

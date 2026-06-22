@@ -68,9 +68,9 @@ private:
     fStar::Node *node_edge_to = nullptr;
     bool is_select_node_to_mode = false;
 
-    std::string p = "4";
-    std::string temperature = "100";
-    std::string cooling = "50";
+    std::string p = "2";
+    std::string temperature = "10";
+    std::string cooling = "1";
 
     std::string path_load_from = "../save";
     std::string path_save_to = "../save";
@@ -334,6 +334,7 @@ private:
             });
     }
 
+
     Component NodeInfoComponent() {
         auto name_in = Input(&edit_name, "node name");
         auto x_in = Input(&edit_x, "X coord");
@@ -357,7 +358,7 @@ private:
                 return vbox({
                            text(" Edit Node ") | bold | color(Color::Green),
                            separator(),
-                           text("ID: " + std::to_string(selected_node->id) + (this->selected_node->is_center ? "  Center" : "" )),
+                           text("ID: " + std::to_string(selected_node->id) + (this->selected_node->is_center ? "  Center "+ std::to_string( this->controler->center_id_to_group(this->selected_node) ) : "" )),
                            text ("Group: " + (this->selected_node->belongs_to_p_group == fStar::Node::NO_GROUP ? "No group" : std::to_string(this->selected_node->belongs_to_p_group))),
                            hbox({text("Name : " ), name_in->Render()}),
                            hbox({text("Pos X : "), x_in->Render()}),
@@ -377,7 +378,7 @@ private:
 
     Component AlgorithmParametersComponent() {
         auto p_in = Input(&p, "Number of centers");
-        auto temperature_in = Input(&p, "Temperature");
+        auto temperature_in = Input(&temperature, "Temperature");
         auto cooling_in = Input(&cooling, "Cooling");
 
         auto recalculate_matrix_btn = Button("Recalculate Matrix", [&] {

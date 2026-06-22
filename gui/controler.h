@@ -9,7 +9,9 @@
 #include "../fStar/fStar.hpp"
 #include  "../fStar/NodeAllocator.hpp"
 #include "../fStar/Alg/DistanceMatrix.hpp"
+#include "../fStar/Alg/SimulatedAnnealing.hpp"
 #include "../fStar/Loader.hpp"
+
 
 using namespace Alg;
 
@@ -25,6 +27,16 @@ private:
         for (int i = 0; i < this->centers.size(); i++) {
             (this->centers[i])->belongs_to_p_group = i;
             this->centers[i]->is_center = true; // just in case - clearResult expects this
+        }
+    }
+
+    void hardCentersRebuild() {
+        auto nodeEnd = star->end_nodes();
+        for (auto it = star->begin_nodes(); it != nodeEnd; ++it) {
+            if ((*it)->is_center) {
+                (*it)->belongs_to_p_group = this->centers.size();
+                this->centers.push_back(*it);
+            }
         }
     }
 
@@ -48,13 +60,7 @@ private:
         this->distancaMatrix = new DistanceMatrix(fstar);
 
         auto nodeEnd = star->end_nodes();
-        for (auto it = star->begin_nodes(); it != nodeEnd; ++it) {
-            fStar::Node* node = *it;
-            if (node->is_center) {
-                this->centers.push_back(node);
-            }
-        }
-        rebuildCenterContainer();
+        hardCentersRebuild();
     };
     ~Controler() {
         delete distancaMatrix;
@@ -224,6 +230,8 @@ private:
             return e.what();
         }
 
+        hardCentersRebuild();
+
         delete(this->distancaMatrix);
         this->distancaMatrix = new DistanceMatrix(this->star);
 
@@ -236,9 +244,23 @@ private:
         return "Matrix recalculated";
     }
 
-    string runAlgorithm(string p, string temperature, string cooling) {
-        // TODO: Implement
-        return "Not implemented yet";
+    string runAlgorithm(string sp, string stemperature, string scooling) {
+        this->rcalcucateDistanceMatrix();
+
+        int numOfCenter = std::stoi(sp);
+        float temperature = std::stof(stemperature);
+        float cooling = std::stof(scooling);
+
+        float bestFoundSolution = std::numeric_limits<float>::infinity();
+        try {
+            SimulatedAnnealing simAnl = SimulatedAnnealing(this->star, this->D(), numOfCenter, &this->centers, temperature, cooling);
+            simAnl.Run();
+            bestFoundSolution = simAnl.GetSolution();
+        } catch (const std::invalid_argument& e) {
+            return e.what();
+        }
+
+        return "Best Found Solution is: " + std::to_string(bestFoundSolution);
     }
 
     string clearResult() {
@@ -255,6 +277,19 @@ private:
         this->rebuildCenterContainer();
 
         return "Result cleared";
+    }
+
+    int center_id_to_group(fStar::Node* center) {
+        if (!center->is_center) {
+            return -1;
+        }
+
+        for (int i = 0; i < this->centers.size(); i++) {
+            if (this->centers[i]->id == center->id) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     fStar::FStar* getFStar() {

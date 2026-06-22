@@ -51,7 +51,7 @@ namespace Alg {
                 }
             }
 
-            // Failsafe if no other are found
+            // Failsafe if no other are found self
             if (minInd == -1) {
                 minInd = this->row_ind ;
             }
