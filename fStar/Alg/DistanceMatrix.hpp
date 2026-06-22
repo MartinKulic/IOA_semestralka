@@ -26,12 +26,38 @@ namespace Alg {
     struct DM_Row {
     private:
         float* row;
+        int row_size;
+        int row_ind;
         IndexEncoder* index_encoder_;
     public:
-        DM_Row(float * row, IndexEncoder * index_encoder) {
+        DM_Row(float * row, int rowSize, int rowInd, IndexEncoder * index_encoder) {
             this->row =row;
             this->index_encoder_ = index_encoder;
+            this->row_size = rowSize;
+            this->row_ind = rowInd;
         };
+
+        const int minValToId() {
+            float min = std::numeric_limits<float>::infinity();
+            int minInd = -1;
+            for (int i=0; i<this->row_size; i++) {
+                if (this->row_ind = i) {
+                    continue;
+                }
+
+                if (row[i]<min) {
+                    min = row[i];
+                    minInd = i;
+                }
+            }
+
+            // Failsafe if no other are found
+            if (minInd == -1) {
+                minInd = this->row_ind ;
+            }
+
+            return this->index_encoder_->index_to_id[ minInd ];
+        }
 
         const float operator [] (int from) {
             return row[index_encoder_->id_to_index[from]];
@@ -123,7 +149,7 @@ namespace Alg {
 
         DM_Row operator [] (int from) {
 
-            return DM_Row( Distances[this->index_encoder_->id_to_index[from]], this->index_encoder_);
+            return DM_Row( Distances[this->index_encoder_->id_to_index[from]], this->size(),this->index_encoder_->id_to_index[from], this->index_encoder_);
         }
 
         int size() const {
