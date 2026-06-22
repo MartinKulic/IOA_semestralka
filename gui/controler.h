@@ -31,6 +31,7 @@ private:
     }
 
     void hardCentersRebuild() {
+        this->centers.clear();
         auto nodeEnd = star->end_nodes();
         for (auto it = star->begin_nodes(); it != nodeEnd; ++it) {
             if ((*it)->is_center) {
@@ -257,6 +258,9 @@ private:
             simAnl.Run();
             bestFoundSolution = simAnl.GetSolution();
         } catch (const std::invalid_argument& e) {
+            return e.what();
+        }
+        catch (const std::runtime_error& e) {
             return e.what();
         }
 

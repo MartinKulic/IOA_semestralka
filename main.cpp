@@ -48,6 +48,11 @@ int main() {
     c.runAlgorithm("1", "10", "1");
     c.runAlgorithm("2", "10", "1");
 
+    fStar::Edge edgeToDel = {l[5], l[6], 10};
+    c.deleteEdge(edgeToDel);
+
+    c.load("../save_not_full_graph");
+
     gui g = gui(&fsStar, &c);
     g.run();
 
