@@ -21,6 +21,8 @@ using namespace fStar;
 
 class gui {
 private:
+    App screen;
+
     FStar *fstar;
     Controler *controler;
 
@@ -82,26 +84,26 @@ private:
 
     static constexpr uint8_t kGroupColors[] = {
         196, // Red1
-        21,  // Blue1
+        21, // Blue1
         201, // Magenta1
-        51,  // Cyan1
+        51, // Cyan1
         208, // Orange1
-        93,  // Purple
+        93, // Purple
         118, // Lime
-        39,  // DeepSkyBlue1
+        39, // DeepSkyBlue1
         198, // DeepPink1
         214, // Gold1
 
         160, // Red3
-        27,  // DodgerBlue2
+        27, // DodgerBlue2
         129, // MediumPurple
-        45,  // Turquoise2
+        45, // Turquoise2
         202, // OrangeRed1
-        99,  // MediumPurple1
-        82,  // Chartreuse2
-        33,  // DeepSkyBlue3
+        99, // MediumPurple1
+        82, // Chartreuse2
+        33, // DeepSkyBlue3
         171, // Orchid
-        220  // Gold2
+        220 // Gold2
     };
 
     void DrawNodes() {
@@ -113,12 +115,12 @@ private:
 
             string text = n->name;
             if (n->is_center) {
-                text = "|"+n->name+"|";
+                text = "|" + n->name + "|";
             }
             Color col = Color::Default;
 
             if (n->belongs_to_p_group != fStar::Node::NO_GROUP) {
-                col=GroupToColor(n->belongs_to_p_group);
+                col = GroupToColor(n->belongs_to_p_group);
             }
 
             if (n == selected_node)
@@ -131,15 +133,14 @@ private:
     }
 
     Color GroupToColor(uint group) {
-
         if (group < 20) {
-            return static_cast<Color::Palette256>( kGroupColors[group] );
+            return static_cast<Color::Palette256>(kGroupColors[group]);
         }
         // if (group<10) {
         //     return static_cast<Color::Palette16>( group+4 );
         // }
 
-        return static_cast<Color::Palette256>( 17 + ((group * 9) % 214) );
+        return static_cast<Color::Palette256>(17 + ((group * 9) % 214));
         // constexpr int palette_size = 216;
         // constexpr double golden = 0.61803398875;
         //
@@ -311,7 +312,7 @@ private:
         auto name_in = Input(&add_node_name, "Name");
         auto x_in = Input(&add_node_x, "X");
         auto y_in = Input(&add_node_y, "Y");
-        auto is_center_cb = Checkbox( "Center", &this->add_node_is_center);
+        auto is_center_cb = Checkbox("Center", &this->add_node_is_center);
         auto add_btn = Button("Add New Node", [&] {
             fStar::Node *n = nullptr;
             status_msg = controler->addNode(add_node_name, add_node_x, add_node_y, add_node_is_center, &n);
@@ -328,7 +329,7 @@ private:
                     hbox({text("Name: "), name_in->Render()}),
                     hbox({text("X: "), x_in->Render()}),
                     hbox({text("Y: "), y_in->Render()}),
-                    hbox( prev_cb->Render() | dim, filler(), is_center_cb->Render()),
+                    hbox(prev_cb->Render() | dim, filler(), is_center_cb->Render()),
                     add_btn->Render() | color(Color::BlueLight),
                 });
             });
@@ -339,7 +340,7 @@ private:
         auto name_in = Input(&edit_name, "node name");
         auto x_in = Input(&edit_x, "X coord");
         auto y_in = Input(&edit_y, "Y coord");
-        auto is_center_cb = Checkbox( "Center", &this->edit_is_center);
+        auto is_center_cb = Checkbox("Center", &this->edit_is_center);
         auto apply_btn = Button("  Apply Node Changes  ", [&] {
             status_msg = controler->modifyNode(selected_node, edit_name, edit_x, edit_y, edit_is_center);
         });
@@ -358,9 +359,16 @@ private:
                 return vbox({
                            text(" Edit Node ") | bold | color(Color::Green),
                            separator(),
-                           text("ID: " + std::to_string(selected_node->id) + (this->selected_node->is_center ? "  Center "+ std::to_string( this->controler->center_id_to_group(this->selected_node) ) : "" )),
-                           text ("Group: " + (this->selected_node->belongs_to_p_group == fStar::Node::NO_GROUP ? "No group" : std::to_string(this->selected_node->belongs_to_p_group))),
-                           hbox({text("Name : " ), name_in->Render()}),
+                           text("ID: " + std::to_string(selected_node->id) + (this->selected_node->is_center
+                                                                                  ? "  Center " + std::to_string(
+                                                                                          this->controler->
+                                                                                          center_id_to_group(
+                                                                                              this->selected_node))
+                                                                                  : "")),
+                           text("Group: " + (this->selected_node->belongs_to_p_group == fStar::Node::NO_GROUP
+                                                 ? "No group"
+                                                 : std::to_string(this->selected_node->belongs_to_p_group))),
+                           hbox({text("Name : "), name_in->Render()}),
                            hbox({text("Pos X : "), x_in->Render()}),
                            hbox({text("Pos Y : "), y_in->Render()}),
                            text("Drawn X: " + std::to_string(cor.x)),
@@ -395,25 +403,28 @@ private:
             this->status_msg = response;
         });
 
-        auto inner = Container::Vertical({p_in, temperature_in, cooling_in, recalculate_matrix_btn, clear_solution_btn, run_algoritm_btn});
-
-        return Renderer(inner, [&, p_in, temperature_in, cooling_in, recalculate_matrix_btn, clear_solution_btn, run_algoritm_btn] {
-            Elements lines;
-            lines.push_back(text(" ALGORITHM") | bold | color(Color::GreenYellow));
-            lines.push_back(separatorLight());
-            lines.push_back(hbox(text("Number of Centers: "), p_in->Render()));
-            lines.push_back(hbox(text("Temperature: "), temperature_in->Render()));
-            lines.push_back(hbox(text("Cooling: "), cooling_in->Render()));
-            lines.push_back(hbox(
-                recalculate_matrix_btn->Render() | color(Color::CadetBlue),
-                filler(),
-                clear_solution_btn->Render() | dim,
-                filler(),
-                run_algoritm_btn->Render() | color(Color::GreenYellow))
-            );
-
-            return vbox(std::move(lines)) | border;
+        auto inner = Container::Vertical({
+            p_in, temperature_in, cooling_in, recalculate_matrix_btn, clear_solution_btn, run_algoritm_btn
         });
+
+        return Renderer(
+            inner, [&, p_in, temperature_in, cooling_in, recalculate_matrix_btn, clear_solution_btn, run_algoritm_btn] {
+                Elements lines;
+                lines.push_back(text(" ALGORITHM") | bold | color(Color::GreenYellow));
+                lines.push_back(separatorLight());
+                lines.push_back(hbox(text("Number of Centers: "), p_in->Render()));
+                lines.push_back(hbox(text("Temperature: "), temperature_in->Render()));
+                lines.push_back(hbox(text("Cooling: "), cooling_in->Render()));
+                lines.push_back(hbox(
+                        recalculate_matrix_btn->Render() | color(Color::CadetBlue),
+                        filler(),
+                        clear_solution_btn->Render() | dim,
+                        filler(),
+                        run_algoritm_btn->Render() | color(Color::GreenYellow))
+                );
+
+                return vbox(std::move(lines)) | border;
+            });
     }
 
     Component DangerOperationsComponent() {
@@ -422,9 +433,17 @@ private:
             node_edge_to = nullptr;
             status_msg = controler->recalculateAllDistances();
         });
-        // Renderer(base, fn) uses base for focus/event routing and fn for
-        // rendering only – the minimal wrapper to apply element decorators.
-        auto colap = Collapsible("Danger", recalc_btn | color(Color::Orange1));
+
+        auto exit_btn = Button("Exit", [this] {
+            this->status_msg = "Exit";
+            this->screen.ExitLoopClosure()();
+        });
+
+        auto inner = Container::Horizontal({exit_btn, recalc_btn});
+
+        auto colap = Collapsible("Danger", Renderer(inner, [exit_btn, recalc_btn] {
+            return hbox({recalc_btn->Render(), filler(), exit_btn->Render() | color(Color::Red1)});
+        }) | color(Color::Orange1));
         return Renderer(colap, [colap] {
             return colap->Render() | border | color(Color::Red);
         });
@@ -584,6 +603,7 @@ private:
                                       lines.push_back(text("[Home] exit ToMode | [Alt+S] toggle ToMode") | dim);
                                       lines.push_back(text("[PgUp/PgDn] or scroll to scroll menu") | dim);
                                       lines.push_back(text("[Alt+R] reset scroll") | dim);
+                                      lines.push_back(text("[Ctrl+Alt+D] exit / close app") | dim);
 
                                       return vbox(std::move(lines))
                                              | focusPosition(0, menu_scroll_offset)
@@ -674,8 +694,9 @@ private:
     }
 
 public:
-    gui(FStar *fstar, Controler *controler)
-        : fstar(fstar)
+    gui(FStar *fstar, Controler *controler) :
+            screen(ScreenInteractive::Fullscreen())
+          , fstar(fstar)
           , controler(controler)
           , transformer(std::make_unique<Transformer>())
           , rTransformer(std::make_unique<Transformer>())
@@ -690,7 +711,7 @@ public:
     }
 
     void run() {
-        auto screen = ScreenInteractive::Fullscreen();
+        //auto screen = ScreenInteractive::Fullscreen();
 
         std::vector<std::string> tab_labels = {" Graph ", " Distance Matrix "};
         auto tab_toggle = Toggle(&tab_labels, &active_tab);
@@ -723,6 +744,11 @@ public:
             }
             if (event == Event::AltR) {
                 menu_scroll_offset = 0;
+                return true;
+            }
+            if (event == Event::CtrlAltD) {
+                this->status_msg = "Exit Pressed";
+                screen.ExitLoopClosure()();
                 return true;
             }
             return false;
