@@ -33,6 +33,8 @@ class Controler {
     std::mutex algo_result_mtx;
     string algo_result = "Algorith not run yet";
     std::atomic<float> algo_current_temperature;
+    std::mutex alg_big_result_mtx;
+    string algo_big_result = "No algorithm result";
 
 private:
     void rebuildCenterContainer() {
@@ -321,6 +323,35 @@ private:
         this->algo_result_mtx.lock();
         this->algo_result = "Best Found Solution is: " + std::to_string(bestFoundSolution);
         this->algo_result_mtx.unlock();
+
+        vector<vector<fStar::Node*>>* groupToCenter = new vector<vector<fStar::Node*>>();
+        for (int centerid = 0; centerid < this->centers.size(); centerid++) {
+            groupToCenter->push_back(vector<fStar::Node*>());
+        }
+
+        auto nodeEnd = star->end_nodes();
+        for (auto nodeit = star->begin_nodes(); nodeit != nodeEnd; ++nodeit) {
+            fStar::Node* node = *nodeit;
+            groupToCenter->at(node->belongs_to_p_group).push_back(node);
+        }
+
+        this->alg_big_result_mtx.lock();
+        this->algo_big_result = "";
+        for (int i = 0; i < this->centers.size(); i++) {
+            vector<fStar::Node*> nodesInGroup = groupToCenter->at(i);
+            fStar::Node* centerNode = (centers.at(i));
+            this->algo_big_result += "Center group " + std::to_string(i) + " - " + centerNode->name + "  id[" + std::to_string(centerNode->id) + "]\n";
+            if (nodesInGroup.size() == 0) {
+                this->algo_big_result += "    No nodes\n";
+                continue;
+            }
+            for (fStar::Node* node : nodesInGroup) {
+                this->algo_big_result += "    g" + std::to_string(node->belongs_to_p_group) + "   " + node->name + " - id[" + std::to_string(node->id) + "]\n";
+            }
+        }
+        this->alg_big_result_mtx.unlock();
+
+        delete groupToCenter;
         algo_running.store(false);
     }
 
@@ -349,6 +380,7 @@ private:
             algo_thread.join();
 
         this->algo_result = "RUNNING";
+        this->algo_big_result = "No Result";
 
         algo_thread = thread([=, this] {algorithm_task(numOfCenter, temperature, cooling); });
 
@@ -388,6 +420,10 @@ private:
 
         this->rebuildCenterContainer();
 
+        this->alg_big_result_mtx.lock();
+        this->algo_big_result = "No Result";
+        this->alg_big_result_mtx.unlock();
+
         return "Result cleared";
     }
 
@@ -413,6 +449,14 @@ private:
         this->algo_result_mtx.lock();
         result = this->algo_result;
         this->algo_result_mtx.unlock();
+        return result;
+    }
+
+    string getAlgFullResult() {
+        string result;
+        this->alg_big_result_mtx.lock();
+        result = this->algo_big_result;
+        this->alg_big_result_mtx.unlock();
         return result;
     }
 

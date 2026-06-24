@@ -71,8 +71,10 @@ private:
     bool is_select_node_to_mode = false;
 
     std::string p = "2";
-    std::string temperature = "10";
+    std::string temperature = "100";
     std::string cooling = "1";
+    std::string algo_res = "No result";
+
 
     std::string path_load_from = "../save";
     std::string path_save_to = "../save";
@@ -406,12 +408,17 @@ private:
             this->status_msg = controler->stopAlogithm();
         });
 
+
+        auto colap = Collapsible(&this->algo_res, Renderer([this] {
+            return text(controler->getAlgFullResult());
+        }));
+
         auto inner = Container::Vertical({
-            p_in, temperature_in, cooling_in, recalculate_matrix_btn, clear_solution_btn, run_algoritm_btn, stop_algoritm_btn
+            p_in, temperature_in, cooling_in, recalculate_matrix_btn, clear_solution_btn, run_algoritm_btn, stop_algoritm_btn, colap
         });
 
         return Renderer(
-            inner, [&, p_in, temperature_in, cooling_in, recalculate_matrix_btn, clear_solution_btn, run_algoritm_btn, stop_algoritm_btn] {
+            inner, [&, p_in, temperature_in, cooling_in, recalculate_matrix_btn, clear_solution_btn, run_algoritm_btn, stop_algoritm_btn, colap] {
                 Elements lines;
                 lines.push_back(text(" ALGORITHM") | bold | color(Color::GreenYellow));
                 lines.push_back(separatorLight());
@@ -427,7 +434,8 @@ private:
                         run_algoritm_btn->Render() | (controler->isAlgRunning() ? dim : color(Color::GreenYellow))
                 ));
 
-                lines.push_back(text(controler->getAlgoResult()));
+                this->algo_res = controler->getAlgoResult();
+                lines.push_back(colap->Render());
 
                 return vbox(std::move(lines)) | border;
             });
