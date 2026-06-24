@@ -4,6 +4,7 @@
 
 #ifndef IOA_SEMESTRALKA_SUMULATEDANNEALING_HPP
 #define IOA_SEMESTRALKA_SUMULATEDANNEALING_HPP
+#include <atomic>
 #include <stdexcept>
 
 #include "DistanceMatrix.hpp"
@@ -18,7 +19,7 @@ namespace Alg {
         map<int,int> id_to_center_group;
         int* bestSolution; //best solution
         float bestFx;
-        float temperature;
+        atomic<float>& temperature;
         float cooling;
         fStar::FStar* star;
         DistanceMatrix* D;
@@ -35,7 +36,7 @@ namespace Alg {
         bool Anneal(float newFx);
 
         public:
-        SimulatedAnnealing(fStar::FStar* star, Alg::DistanceMatrix* distanceMatrig, int numOfCenters, vector<fStar::Node*>* centerCandidates, float initTemperature=100.0, float cooling=10.0) : p(numOfCenters),
+        SimulatedAnnealing(fStar::FStar* star, Alg::DistanceMatrix* distanceMatrig, int numOfCenters, vector<fStar::Node*>* centerCandidates, atomic< float >& initTemperature, float cooling=10.0) : p(numOfCenters),
             centerCandidates(centerCandidates), temperature(initTemperature), cooling(cooling),
             star(star), D(distanceMatrig) {
 

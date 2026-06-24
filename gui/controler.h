@@ -31,6 +31,7 @@ class Controler {
 
     std::mutex algo_result_mtx;
     string algo_result = "Algorith not run yet";
+    std::atomic<float> algo_current_temperature;
 
 private:
     void rebuildCenterContainer() {
@@ -79,6 +80,10 @@ private:
     }
 
     string addNode(string name, string sx, string sy, bool is_center, fStar::Node** newNodeToRet) {
+        if (this->algo_running.load()) {
+            return "No Modification while algorith is running";
+        }
+
         float x,y;
         try {
             x = std::stof(sx);
@@ -108,6 +113,10 @@ private:
         return "Node " + name + " added successfully to x " + sx + " y " + sy;
     };
     string deleteNode(int nodeToDelId) {
+        if (this->algo_running.load()) {
+            return "No Modification while algorith is running";
+        }
+
         fStar::Node* nodeToDelete = star->getNode(nodeToDelId);
         if (!nodeToDelete) {
             return "Could not found node id " + nodeToDelId;
@@ -123,6 +132,10 @@ private:
         return "Node deleted";
     };
     string modifyNode(fStar::Node* nodeToMod, string newName, string snewX, string snewY, bool is_center) {
+        if (this->algo_running.load()) {
+            return "No Modification while algorith is running";
+        }
+
         if (nodeToMod == nullptr) {           // <-- guard against spurious calls
             return "Why and more likely HOW TF is modifie node called";
         }
@@ -164,6 +177,10 @@ private:
     };
 
     string addEdge(fStar::Node* from, fStar::Node* to, string sWeight) {
+        if (this->algo_running.load()) {
+            return "No Modification while algorith is running";
+        }
+
         if (!to || !from) {
             return "Edge points are not defined";
         }
@@ -180,10 +197,18 @@ private:
         return "OK";
     };
     string deleteEdge(fStar::Edge edgeToDel) {
+        if (this->algo_running.load()) {
+            return "No Modification while algorith is running";
+        }
+
         star->deleteEdge(edgeToDel.from->id, edgeToDel.to->id);
         return"Edge to " + edgeToDel.to->name + " deleted.";
     };
     string modifyEdge(fStar::Edge edge, string newWeoght) {
+        if (this->algo_running.load()) {
+            return "No Modification while algorith is running";
+        }
+
         float newWeight;
         try {
             newWeight = strToWeight(newWeoght);
@@ -211,6 +236,10 @@ private:
     }
 
     string recalculateAllDistances() {
+        if (this->algo_running.load()) {
+            return "No Modification while algorith is running";
+        }
+
         auto endEdgeIt = star->end_edges();
         for (auto edgeIt = star->begin_edges(); edgeIt != endEdgeIt; ++edgeIt) {
             fStar::Edge edge = *edgeIt;
@@ -236,6 +265,9 @@ private:
     }
 
     string load(std::string path,  bool ignoreId = false) {
+        if (this->algo_running.load()) {
+            return "Not permited while algorith is running";
+        }
         try {
             Loader::load(path, star, loader, ignoreId);
         }catch (const exception& e) {
@@ -251,15 +283,21 @@ private:
     }
 
     string rcalcucateDistanceMatrix() {
+        if (this->algo_running.load()) {
+            return "Not permited while algorith is running";
+        }
+
         delete(this->distancaMatrix);
         this->distancaMatrix = new DistanceMatrix(this->star);
         return "Matrix recalculated";
     }
 
     void algorithm_task(int numOfCenter, float temperature, float cooling) {
+        this->algo_current_temperature = temperature;
+
         float bestFoundSolution = std::numeric_limits<float>::infinity();
         try {
-            SimulatedAnnealing simAnl = SimulatedAnnealing(this->star, this->D(), numOfCenter, &this->centers, temperature, cooling);
+            SimulatedAnnealing simAnl = SimulatedAnnealing(this->star, this->D(), numOfCenter, &this->centers, this->algo_current_temperature, cooling);
             simAnl.Run();
             bestFoundSolution = simAnl.GetSolution();
         } catch (const std::invalid_argument& e) {
@@ -314,7 +352,9 @@ private:
         return "Algorithm run";
     }
 
-    string clearResult() {
+    string clearResult() {if (this->algo_running.load()) {
+            return "Not permited while algorith is running";
+        }
         auto endNodeIt = star->end_nodes();
         for (auto nodeIt = star->begin_nodes(); nodeIt != endNodeIt; ++nodeIt) {
             fStar::Node* node = *nodeIt;
@@ -353,6 +393,10 @@ private:
         result = this->algo_result;
         this->algo_result_mtx.unlock();
         return result;
+    }
+
+    string getCurrentTemperature() {
+         return std::to_string(this->algo_current_temperature);
     }
 
     DistanceMatrix* D() const {

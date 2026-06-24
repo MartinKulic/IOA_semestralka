@@ -413,7 +413,7 @@ private:
                 lines.push_back(text(" ALGORITHM") | bold | color(Color::GreenYellow));
                 lines.push_back(separatorLight());
                 lines.push_back(hbox(text("Number of Centers: "), p_in->Render()));
-                lines.push_back(hbox(text("Temperature: "), temperature_in->Render()));
+                lines.push_back(hbox(text("Temperature: "), temperature_in->Render(), filler(), text("Current T: "+controler->getCurrentTemperature())));
                 lines.push_back(hbox(text("Cooling: "), cooling_in->Render()));
                 lines.push_back(hbox(
                         recalculate_matrix_btn->Render() | color(Color::CadetBlue),
