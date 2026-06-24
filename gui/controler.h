@@ -27,6 +27,7 @@ class Controler {
 
     //std::atomic<bool> algo_stop{false};
     std::atomic<bool> algo_running{false};
+    std::atomic<bool> algo_stop_request{false};
     std::thread algo_thread;
 
     std::mutex algo_result_mtx;
@@ -297,7 +298,7 @@ private:
 
         float bestFoundSolution = std::numeric_limits<float>::infinity();
         try {
-            SimulatedAnnealing simAnl = SimulatedAnnealing(this->star, this->D(), numOfCenter, &this->centers, this->algo_current_temperature, cooling);
+            SimulatedAnnealing simAnl = SimulatedAnnealing(this->star, this->D(), numOfCenter, &this->centers, this->algo_current_temperature, this->algo_stop_request, cooling);
             simAnl.Run();
             bestFoundSolution = simAnl.GetSolution();
         } catch (const std::invalid_argument& e) {
@@ -327,6 +328,8 @@ private:
         if (algo_running.load())
             return "Algorithm already running.";
 
+        this->algo_stop_request.store(false);
+
         this->rcalcucateDistanceMatrix();
 
         int numOfCenter;
@@ -350,6 +353,24 @@ private:
         algo_thread = thread([=, this] {algorithm_task(numOfCenter, temperature, cooling); });
 
         return "Algorithm run";
+    }
+
+    string stopAlogithm() {
+        this->algo_stop_request.store(true);
+
+        if (!this->isAlgRunning()) {
+            return "Alorim already finished";
+        }
+
+        if (algo_thread.joinable()) algo_thread.join();
+
+        //this->algo_running.store(false);
+
+        this->algo_result_mtx.lock();
+        this->algo_result += "  Found so far";
+        this->algo_result_mtx.unlock();
+
+        return "Algorithm stoped, result is best found yet";
     }
 
     string clearResult() {if (this->algo_running.load()) {
@@ -397,6 +418,10 @@ private:
 
     string getCurrentTemperature() {
          return std::to_string(this->algo_current_temperature);
+    }
+
+    bool isAlgRunning() {
+        return this->algo_running.load();
     }
 
     DistanceMatrix* D() const {

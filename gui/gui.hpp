@@ -402,13 +402,16 @@ private:
             string response = controler->runAlgorithm(p, temperature, cooling);
             this->status_msg = response;
         });
+        auto stop_algoritm_btn = Button("Stop Algorithm", [&] {
+            this->status_msg = controler->stopAlogithm();
+        });
 
         auto inner = Container::Vertical({
-            p_in, temperature_in, cooling_in, recalculate_matrix_btn, clear_solution_btn, run_algoritm_btn
+            p_in, temperature_in, cooling_in, recalculate_matrix_btn, clear_solution_btn, run_algoritm_btn, stop_algoritm_btn
         });
 
         return Renderer(
-            inner, [&, p_in, temperature_in, cooling_in, recalculate_matrix_btn, clear_solution_btn, run_algoritm_btn] {
+            inner, [&, p_in, temperature_in, cooling_in, recalculate_matrix_btn, clear_solution_btn, run_algoritm_btn, stop_algoritm_btn] {
                 Elements lines;
                 lines.push_back(text(" ALGORITHM") | bold | color(Color::GreenYellow));
                 lines.push_back(separatorLight());
@@ -420,8 +423,9 @@ private:
                         filler(),
                         clear_solution_btn->Render() | dim,
                         filler(),
-                        run_algoritm_btn->Render() | color(Color::GreenYellow))
-                );
+                        stop_algoritm_btn->Render() | color(Color::Red) | (controler->isAlgRunning() ? blink : dim),
+                        run_algoritm_btn->Render() | (controler->isAlgRunning() ? dim : color(Color::GreenYellow))
+                ));
 
                 lines.push_back(text(controler->getAlgoResult()));
 

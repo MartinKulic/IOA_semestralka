@@ -20,6 +20,7 @@ namespace Alg {
         int* bestSolution; //best solution
         float bestFx;
         atomic<float>& temperature;
+        atomic<bool>& stop_requested;
         float cooling;
         fStar::FStar* star;
         DistanceMatrix* D;
@@ -36,9 +37,9 @@ namespace Alg {
         bool Anneal(float newFx);
 
         public:
-        SimulatedAnnealing(fStar::FStar* star, Alg::DistanceMatrix* distanceMatrig, int numOfCenters, vector<fStar::Node*>* centerCandidates, atomic< float >& initTemperature, float cooling=10.0) : p(numOfCenters),
+        SimulatedAnnealing(fStar::FStar* star, Alg::DistanceMatrix* distanceMatrig, int numOfCenters, vector<fStar::Node*>* centerCandidates, atomic< float >& initTemperature, atomic<bool>& stop_flag, float cooling=10.0) : p(numOfCenters),
             centerCandidates(centerCandidates), temperature(initTemperature), cooling(cooling),
-            star(star), D(distanceMatrig) {
+            star(star), D(distanceMatrig), stop_requested(stop_flag) {
 
             if ((*centerCandidates).size() < numOfCenters) {
                 throw std::invalid_argument("Number of center candidates must be equal or greater than number of desired centers");
@@ -69,6 +70,13 @@ namespace Alg {
             CalculateFx();
             return bestFx;
         };
+
+        void RequestStop() {
+            this->stop_requested.store(true);
+        }
+        bool wasStopRequested() {
+            return this->stop_requested.load();
+        }
     };
 } // Alg
 

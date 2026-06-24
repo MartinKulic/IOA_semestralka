@@ -73,7 +73,7 @@ namespace Alg {
 
             Fx += (*D)[(*nodeIt)->id][closestCenter];
 
-            // if (flag is set)
+            // nech to blikaaaa
             (*nodeIt)->belongs_to_p_group = id_to_center_group[closestCenter];
         }
 
@@ -92,7 +92,7 @@ namespace Alg {
             return;
         }
 
-        while (temperature > 0.5) {
+        while (temperature > 0.5 && !this->stop_requested.load()) {
             MakeNewSolution();
             float currentFx = CalculateFx();
             if (currentFx < bestFx) {
