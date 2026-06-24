@@ -37,7 +37,7 @@ namespace Alg {
 
         int helper = this->included.at(lastIndIncludedSelected);
         this->included.at(lastIndIncludedSelected) = this->notIncluded.at(lastIndNotIncludedSelected);
-        this->notIncluded.at(lastIndIncludedSelected) = helper;
+        this->notIncluded.at(lastIndNotIncludedSelected) = helper;
     }
 
     void SimulatedAnnealing::RollbackSolution() {
@@ -92,7 +92,7 @@ namespace Alg {
             return;
         }
 
-        while (temperature > 1.5) {
+        while (temperature > 0.5) {
             MakeNewSolution();
             float currentFx = CalculateFx();
             if (currentFx < bestFx) {
@@ -106,7 +106,8 @@ namespace Alg {
                 }
             }
             //update temperature
-            this->temperature =this->temperature / (1 + (this->cooling*this->temperature) );
+            //this->temperature = this->temperature / (1 + (this->cooling * this->temperature) );
+            this->temperature = this->temperature - this->cooling;
         }
     }
 } // Alg
