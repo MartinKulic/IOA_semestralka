@@ -423,6 +423,8 @@ private:
                         run_algoritm_btn->Render() | color(Color::GreenYellow))
                 );
 
+                lines.push_back(text(controler->getAlgoResult()));
+
                 return vbox(std::move(lines)) | border;
             });
     }

@@ -45,13 +45,18 @@ int main() {
     c.load("../save2");
     c.clearResult();
 
-    c.runAlgorithm("1", "10", "1");
-    c.runAlgorithm("2", "10", "1");
+    //c.runAlgorithm("1", "10", "1");
+    //c.runAlgorithm("2", "10", "1");
 
-    fStar::Edge edgeToDel = {l[5], l[6], 10};
-    c.deleteEdge(edgeToDel);
+    //fStar::Edge edgeToDel = {l[5], l[6], 10};
+    //c.deleteEdge(edgeToDel);
 
-    c.load("../save_not_full_graph");
+    //c.load("../save_not_full_graph");
+    fStar::Node* ntm = l[7];
+    c.modifyNode(ntm, ntm->name, std::to_string(ntm->x), std::to_string(ntm->y), true);
+
+    //c.runAlgorithm("2", "1000", "1");
+    //std::cout << "alg fin";
 
     gui g = gui(&fsStar, &c);
     g.run();

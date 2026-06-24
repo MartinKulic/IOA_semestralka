@@ -5,6 +5,9 @@
 #ifndef IOA_SEMESTRALKA_CONTROLER_H
 #define IOA_SEMESTRALKA_CONTROLER_H
 #include <cmath>
+#include <mutex>
+#include <thread>
+#include <cstring>
 
 #include "../fStar/fStar.hpp"
 #include  "../fStar/NodeAllocator.hpp"
@@ -21,6 +24,13 @@ class Controler {
     NodeAllocator* loader;
     DistanceMatrix* distancaMatrix;
     vector<fStar::Node*> centers;
+
+    //std::atomic<bool> algo_stop{false};
+    std::atomic<bool> algo_running{false};
+    std::thread algo_thread;
+
+    std::mutex algo_result_mtx;
+    string algo_result = "Algorith not run yet";
 
 private:
     void rebuildCenterContainer() {
@@ -64,6 +74,7 @@ private:
         hardCentersRebuild();
     };
     ~Controler() {
+        if (algo_thread.joinable()) algo_thread.join();
         delete distancaMatrix;
     }
 
@@ -245,26 +256,62 @@ private:
         return "Matrix recalculated";
     }
 
-    string runAlgorithm(string sp, string stemperature, string scooling) {
-        this->rcalcucateDistanceMatrix();
-
-        int numOfCenter = std::stoi(sp);
-        float temperature = std::stof(stemperature);
-        float cooling = std::stof(scooling);
-
+    void algorithm_task(int numOfCenter, float temperature, float cooling) {
         float bestFoundSolution = std::numeric_limits<float>::infinity();
         try {
             SimulatedAnnealing simAnl = SimulatedAnnealing(this->star, this->D(), numOfCenter, &this->centers, temperature, cooling);
             simAnl.Run();
             bestFoundSolution = simAnl.GetSolution();
         } catch (const std::invalid_argument& e) {
-            return e.what();
+            this->algo_result_mtx.lock();
+            this->algo_result = e.what();
+            this->algo_result_mtx.unlock();
+
+            algo_running.store(false);
+            return;
         }
         catch (const std::runtime_error& e) {
-            return e.what();
+            this->algo_result_mtx.lock();
+            this->algo_result = e.what();
+            this->algo_result_mtx.unlock();
+
+            algo_running.store(false);
+            return;
         }
 
-        return "Best Found Solution is: " + std::to_string(bestFoundSolution);
+        this->algo_result_mtx.lock();
+        this->algo_result = "Best Found Solution is: " + std::to_string(bestFoundSolution);
+        this->algo_result_mtx.unlock();
+        algo_running.store(false);
+    }
+
+    string runAlgorithm(string sp, string stemperature, string scooling) {
+        if (algo_running.load())
+            return "Algorithm already running.";
+
+        this->rcalcucateDistanceMatrix();
+
+        int numOfCenter;
+        float temperature;
+        float cooling;
+        try {
+            numOfCenter = std::stoi(sp);
+            temperature = std::stof(stemperature);
+            cooling = std::stof(scooling);
+        } catch (...) {
+            return "Problem while parsing parameters";
+        }
+
+        algo_running.store(true);
+        // Detach previous thread if finished (join is also fine).
+        if (algo_thread.joinable())
+            algo_thread.join();
+
+        this->algo_result = "RUNNING";
+
+        algo_thread = thread([=, this] {algorithm_task(numOfCenter, temperature, cooling); });
+
+        return "Algorithm run";
     }
 
     string clearResult() {
@@ -299,6 +346,15 @@ private:
     fStar::FStar* getFStar() {
         return this->star;
     };
+
+    string getAlgoResult() {
+        string result;
+        this->algo_result_mtx.lock();
+        result = this->algo_result;
+        this->algo_result_mtx.unlock();
+        return result;
+    }
+
     DistanceMatrix* D() const {
         return this->distancaMatrix;
     }
