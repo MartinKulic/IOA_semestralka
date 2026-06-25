@@ -36,6 +36,8 @@ class Controler {
     std::mutex alg_big_result_mtx;
     string algo_big_result = "No algorithm result";
 
+    std::function<void()> redraw_callback = nullptr;
+
 private:
     void rebuildCenterContainer() {
         for (int i = 0; i < this->centers.size(); i++) {
@@ -301,7 +303,7 @@ private:
         float bestFoundSolution = std::numeric_limits<float>::infinity();
         try {
             SimulatedAnnealing simAnl = SimulatedAnnealing(this->star, this->D(), numOfCenter, &this->centers, this->algo_current_temperature, this->algo_stop_request, cooling);
-            simAnl.Run();
+            simAnl.Run(this->redraw_callback);
             bestFoundSolution = simAnl.GetSolution();
         } catch (const std::invalid_argument& e) {
             this->algo_result_mtx.lock();
@@ -352,6 +354,9 @@ private:
         this->alg_big_result_mtx.unlock();
 
         delete groupToCenter;
+
+        this->redraw_callback();
+
         algo_running.store(false);
     }
 
@@ -438,6 +443,10 @@ private:
             }
         }
         return -1;
+    }
+
+    void setRedrawCallback(std::function<void()> fun) {
+        this->redraw_callback = std::move(fun);
     }
 
     fStar::FStar* getFStar() {

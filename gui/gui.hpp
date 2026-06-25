@@ -358,6 +358,15 @@ private:
             Container::Vertical({name_in, x_in, y_in, apply_btn, del_btn, edge_sec, is_center_cb}),
             [&, name_in, x_in, y_in, apply_btn, del_btn, edge_sec, is_center_cb] {
                 coor cor = transformer->transform(selected_node);
+
+                auto centerInfo = hbox();
+                if (selected_node->is_center) {
+                    centerInfo = hbox({
+                        text( "CENTER:  "),
+                        text(std::to_string(this->controler->center_id_to_group(this->selected_node))) | color(this->GroupToColor(this->controler->center_id_to_group(this->selected_node))),
+                    });
+                }
+
                 return vbox({
                            text(" Edit Node ") | bold | color(Color::Green),
                            separator(),
@@ -367,6 +376,7 @@ private:
                                                                                           center_id_to_group(
                                                                                               this->selected_node))
                                                                                   : "")),
+                           centerInfo,
                            text("Group: " + (this->selected_node->belongs_to_p_group == fStar::Node::NO_GROUP
                                                  ? "No group"
                                                  : std::to_string(this->selected_node->belongs_to_p_group))),
@@ -539,11 +549,13 @@ private:
                 if (is_select_node_to_mode) node_edge_to = hit;
                 else SetSelectedNode(hit);
 
-                coor wp = rTransformer->reverseTransform({float(m.x), float(m.y * 2)});
-                last_click_node_x = wp.x;
-                last_click_node_y = wp.y;
-                add_node_x = std::to_string(wp.x);
-                add_node_y = std::to_string(wp.y);
+                if (hit == nullptr) {
+                    coor wp = rTransformer->reverseTransform({float(m.x), float(m.y * 2)});
+                    last_click_node_x = wp.x;
+                    last_click_node_y = wp.y;
+                    add_node_x = std::to_string(wp.x);
+                    add_node_y = std::to_string(wp.y);
+                }
                 return hit != nullptr;
             }
             if (m.button == Mouse::Right) {
@@ -722,6 +734,10 @@ public:
         *rTransformer += Transformer::rScale(&_canvas_zoom);
         *rTransformer += Transformer::rMove(&_canvas_pan_x, &_canvas_pan_y);
         *rTransformer += Transformer::rFlipY(0.0);
+
+        controler->setRedrawCallback([this] {
+            screen.PostEvent(Event::Custom);
+        });
     }
 
     void run() {

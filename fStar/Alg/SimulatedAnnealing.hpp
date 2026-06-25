@@ -5,6 +5,7 @@
 #ifndef IOA_SEMESTRALKA_SUMULATEDANNEALING_HPP
 #define IOA_SEMESTRALKA_SUMULATEDANNEALING_HPP
 #include <atomic>
+#include <functional>
 #include <stdexcept>
 
 #include "DistanceMatrix.hpp"
@@ -62,7 +63,7 @@ namespace Alg {
         }
 
 
-        void Run();
+        void Run(function<void()> redrawFun = nullptr, int timeIntervalCallRedrawFun = 200);
         float GetSolution() {
             for (int i = 0; i < this->included.size(); i++) { // just in case
                 this->included.at(i) = bestSolution[i];

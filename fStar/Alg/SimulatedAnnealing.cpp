@@ -4,7 +4,9 @@
 
 #include "SimulatedAnnealing.hpp"
 
+#include <chrono>
 #include <cmath>
+#include <functional>
 
 namespace Alg {
     void SimulatedAnnealing::MakeInitSolution() {
@@ -81,7 +83,7 @@ namespace Alg {
     }
 
 
-    void SimulatedAnnealing::Run() {
+    void SimulatedAnnealing::Run(function<void()> redrawFun, int timeIntervalCallRedrawFun) {
         // init solution
         MakeInitSolution();
 
@@ -91,6 +93,8 @@ namespace Alg {
         if (this->notIncluded.size() == 0) {
             return;
         }
+
+        auto last_notify = std::chrono::steady_clock::now();
 
         while (temperature > 0.5 && !this->stop_requested.load()) {
             MakeNewSolution();
@@ -108,6 +112,13 @@ namespace Alg {
             //update temperature
             //this->temperature = this->temperature / (1 + (this->cooling * this->temperature) );
             this->temperature = this->temperature - this->cooling;
+            auto now = std::chrono::steady_clock::now();
+
+            if (redrawFun &&
+                std::chrono::duration_cast<std::chrono::milliseconds>(now - last_notify).count() >= timeIntervalCallRedrawFun) {
+                redrawFun();
+                last_notify = now;
+                }
         }
     }
 } // Alg
