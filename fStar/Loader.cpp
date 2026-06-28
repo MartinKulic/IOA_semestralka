@@ -10,7 +10,7 @@
 #include "ftxui/dom/node.hpp"
 
 
-void Loader::save(std::filesystem::path path, fStar::FStar* star) {
+void Loader::save(std::filesystem::path path, fStar::FStar* star, std::string* sol_big, std::string* sol_small) {
     std::filesystem::create_directories(path);
 
     std::filesystem::path starFilePath = path / Loader::STAR_FILE_NAME;
@@ -33,9 +33,19 @@ void Loader::save(std::filesystem::path path, fStar::FStar* star) {
     }
     outStarFile.close();
 
+    if (sol_big==nullptr && sol_small==nullptr) {
+        return;
+    }
+    // solution
+    std::filesystem::path solFilePath = path / Loader::SOLUTION_FILE_NAME;
+    ofstream outSolFile(solFilePath.string());
+    outSolFile << *sol_small + "\n";
+    outSolFile << *sol_big;
+    outSolFile.close();
+
 }
 
-void Loader::load(std::filesystem::path path, fStar::FStar *star, NodeAllocator *nodeAllocator, bool ignoreId) {
+void Loader::load(std::filesystem::path path, fStar::FStar *star, NodeAllocator *nodeAllocator, bool ignoreId, std::string* sol_big, std::string* sol_small) {
     //TODO: Validate path - if path bad = exception;
 
     star->nuke();
@@ -99,5 +109,21 @@ void Loader::load(std::filesystem::path path, fStar::FStar *star, NodeAllocator 
         star->addEdge(node_from, node_to, weight,true);
 
     }
+    inStarFile.close();
 
+    // solution
+    std::filesystem::path solFilePath = path / Loader::SOLUTION_FILE_NAME;
+    ifstream inSolFile(solFilePath.string());
+    if (!inSolFile.good() || sol_big==nullptr || sol_small==nullptr) {
+        //throw std::invalid_argument("Could not open file " + starFilePath.string() + "\nMake sure " +path.string() + " is correct\n" );
+        return;
+    }
+
+    *sol_small = "";
+    *sol_big = "";
+    std::string line;
+    std::getline(inSolFile, (*sol_small));
+    while (std::getline(inSolFile, line)) {
+        *sol_big += line + "\n";
+    }
 }

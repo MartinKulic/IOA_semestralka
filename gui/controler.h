@@ -261,7 +261,7 @@ private:
 
     string save(std::string path) {
         try {
-            Loader::save(path, star);
+            Loader::save(path, star, &this->algo_big_result, &this->algo_result);
         }catch (const exception& e) {
             return e.what();
         }
@@ -274,7 +274,7 @@ private:
             return "Not permited while algorith is running";
         }
         try {
-            Loader::load(path, star, loader, ignoreId);
+            Loader::load(path, star, loader, ignoreId, &this->algo_big_result, &this->algo_result);
         }catch (const exception& e) {
             return e.what();
         }
