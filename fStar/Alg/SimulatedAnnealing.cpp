@@ -65,7 +65,7 @@ namespace Alg {
         this->included.at(lastIndIncludedSelected) = helper;
     }
 
-    void SimulatedAnnealing::AcceptSolution(float newFx) {
+    void SimulatedAnnealing::AcceptNewBestSolution(float newFx) {
         int* solutionPt = this->bestSolution;
         for (int includedId: this->included) {
             *solutionPt = includedId;
@@ -104,8 +104,7 @@ namespace Alg {
         // init solution
         MakeInitSolution();
 
-        float bestSoFar = CalculateFx();
-        this->bestFx = bestSoFar;
+        this->bestFx = CalculateFx();
 
         if (this->notIncluded.size() == 0) {
             return;
@@ -117,11 +116,12 @@ namespace Alg {
             MakeNewSolution();
             float currentFx = CalculateFx();
             if (currentFx < bestFx) {
-                AcceptSolution(currentFx);
+                AcceptNewBestSolution(currentFx);
             } else {
                 // random experiment
                 if (Anneal(currentFx)) {
-                    AcceptSolution(currentFx);
+                    //AcceptNewBestSolution(currentFx);
+                    //AcceptPrechod - cur solution in included
                 } else {
                     RollbackSolution();
                 }

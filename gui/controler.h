@@ -32,7 +32,7 @@ class Controler {
 
     std::mutex algo_result_mtx;
     string algo_result = "Algorith not run yet";
-    std::atomic<float> algo_current_temperature;
+    std::atomic<double> algo_current_temperature;
     std::mutex alg_big_result_mtx;
     string algo_big_result = "No algorithm result";
 
