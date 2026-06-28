@@ -7,16 +7,33 @@
 #include <chrono>
 #include <cmath>
 #include <functional>
+#include <list>
 
 namespace Alg {
     void SimulatedAnnealing::MakeInitSolution() {
-        int i = 0;
-        for (; i < p; i++) {
-            this->bestSolution[i] = centerCandidates->at(i)->id;
-            this->included.push_back(centerCandidates->at(i)->id);
+        // int i = 0;
+        // for (; i < p; i++) {
+        //     this->bestSolution[i] = centerCandidates->at(i)->id;
+        //     this->included.push_back(centerCandidates->at(i)->id);
+        // }
+        // for (; i < centerCandidates->size(); i++) {
+        //     this->notIncluded.push_back(centerCandidates->at(i)->id);
+        // }
+
+        std::vector<Node*> tempCandidates(centerCandidates->begin(), centerCandidates->end());
+        for (int i = 0; i < p; i++) {
+            int randInd = rand() % tempCandidates.size();
+            Node* selectedNode = tempCandidates[randInd];
+
+            this->bestSolution[i] = selectedNode->id;
+            this->included.push_back(selectedNode->id);
+
+            tempCandidates[randInd] = tempCandidates.back();
+            tempCandidates.pop_back();
         }
-        for (; i < centerCandidates->size(); i++) {
-            this->notIncluded.push_back(centerCandidates->at(i)->id);
+
+        for (Node* node : tempCandidates) {
+            this->notIncluded.push_back(node->id);
         }
     }
 

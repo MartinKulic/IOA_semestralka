@@ -5,6 +5,7 @@
 #ifndef IOA_SEMESTRALKA_SUMULATEDANNEALING_HPP
 #define IOA_SEMESTRALKA_SUMULATEDANNEALING_HPP
 #include <atomic>
+#include <ctime>
 #include <functional>
 #include <stdexcept>
 
@@ -54,8 +55,8 @@ namespace Alg {
                 id_to_center_group[ centerCandidates->at(i)->id ] = i;
             }
 
-            //srand(time(nullptr));
-            srand(10); // TODO: Dont forget
+            srand(time(nullptr));
+            //srand(10);
         };
 
         ~SimulatedAnnealing() {
