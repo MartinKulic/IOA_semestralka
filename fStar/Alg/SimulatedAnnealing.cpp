@@ -75,9 +75,9 @@ namespace Alg {
         this->bestFx = newFx;
     }
 
-    bool SimulatedAnnealing::Anneal(float newFx) {
-        float probability = std::exp( -1 * (newFx - this->bestFx)/this->temperature );
-        return probability <= rand();
+    bool SimulatedAnnealing::Anneal(float newFx, float currentFx) {
+        float probability = std::exp( -1 * (newFx - currentFx)/this->temperature );
+        return probability >= (float)rand()/RAND_MAX;
     }
 
     float SimulatedAnnealing::CalculateFx() {
@@ -111,17 +111,20 @@ namespace Alg {
         }
 
         auto last_notify = std::chrono::steady_clock::now();
+        float currentFx = this->bestFx;
 
         while (temperature > 0.5 && !this->stop_requested.load()) {
             MakeNewSolution();
-            float currentFx = CalculateFx();
+
+            float newFx = CalculateFx();
             if (currentFx < bestFx) {
                 AcceptNewBestSolution(currentFx);
+                currentFx = bestFx;
             } else {
                 // random experiment
-                if (Anneal(currentFx)) {
-                    //AcceptNewBestSolution(currentFx);
+                if (Anneal(currentFx, currentFx)) {
                     //AcceptPrechod - cur solution in included
+                    currentFx = newFx;
                 } else {
                     RollbackSolution();
                 }

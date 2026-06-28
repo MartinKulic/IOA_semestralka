@@ -36,7 +36,7 @@ namespace Alg {
         void MakeNewSolution();
         void RollbackSolution();
         void AcceptNewBestSolution(float newFx);
-        bool Anneal(float newFx);
+        bool Anneal(float newFx,  float currentFx);
 
         public:
         SimulatedAnnealing(fStar::FStar* star, Alg::DistanceMatrix* distanceMatrig, int numOfCenters, vector<fStar::Node*>* centerCandidates, atomic< double >& initTemperature, atomic<bool>& stop_flag, float cooling=10.0) : p(numOfCenters),
