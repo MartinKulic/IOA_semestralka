@@ -410,7 +410,8 @@ private:
         return "Algorithm stoped, result is best found yet";
     }
 
-    string clearResult() {if (this->algo_running.load()) {
+    string clearResult() {
+        if (this->algo_running.load()) {
             return "Not permited while algorith is running";
         }
         auto endNodeIt = star->end_nodes();
@@ -428,6 +429,9 @@ private:
         this->alg_big_result_mtx.lock();
         this->algo_big_result = "No Result";
         this->alg_big_result_mtx.unlock();
+        this->algo_result_mtx.lock();
+        this->algo_result = "Algorith not run yet";
+        this->algo_result_mtx.unlock();
 
         return "Result cleared";
     }
