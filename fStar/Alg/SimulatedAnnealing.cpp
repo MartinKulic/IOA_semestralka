@@ -87,7 +87,7 @@ namespace Alg {
         for (auto nodeIt = this->star->begin_nodes(); nodeIt != nodeEnd; ++nodeIt) {
             int closestCenter = getClosestIncludedCenterTo((*nodeIt)->id);
             if (closestCenter == -1) {
-                throw std::runtime_error("Node " + (*nodeIt)->name + " has no center to belong to");
+                throw std::runtime_error("Node " + (*nodeIt)->name + " - graf is not continuous");
             }
 
             Fx += (*D)[(*nodeIt)->id][closestCenter];

@@ -42,8 +42,8 @@ int main() {
 
     Controler c = Controler(&fsStar, &l);
 
-    c.load("../save2");
-    c.clearResult();
+    // c.load("../save2");
+    // c.clearResult();
 
     //c.runAlgorithm("1", "10", "1");
     //c.runAlgorithm("2", "10", "1");
@@ -52,8 +52,8 @@ int main() {
     //c.deleteEdge(edgeToDel);
 
     //c.load("../save_not_full_graph");
-    fStar::Node* ntm = l[7];
-    c.modifyNode(ntm, ntm->name, std::to_string(ntm->x), std::to_string(ntm->y), true);
+    // fStar::Node* ntm = l[7];
+    // c.modifyNode(ntm, ntm->name, std::to_string(ntm->x), std::to_string(ntm->y), true);
 
     //c.runAlgorithm("2", "1000", "1");
     //std::cout << "alg fin";
@@ -61,7 +61,7 @@ int main() {
     gui g = gui(&fsStar, &c);
     g.run();
 
-    char ch;
-    cin >> ch;
+    // char ch;
+    // cin >> ch;
     return 0;
 }
